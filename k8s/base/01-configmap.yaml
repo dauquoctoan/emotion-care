@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: emotion-common-config
+  namespace: emotion-care
+data:
+  # Database
+  DB_HOST: "postgres-service.database.svc.cluster.local"
+  DB_PORT: "5432"
+  DB_NAME: "emotion_care"
+  SPRING_PROFILES_ACTIVE: "prod"
+  
+  # Kafka
+  KAFKA_BROKERS: "kafka-service.kafka.svc.cluster.local:9092"
+  KAFKA_GROUP_ID: "emotion-notification-group"
+  KAFKA_TOPICS: "emotion.reaction.events,emotion.post.created"
+  
+  # Redis
+  REDIS_HOST: "redis-service.redis.svc.cluster.local"
+  REDIS_PORT: "6379"
+
+  # Workers
+  BATCH_SIZE: "50"
+  POLL_INTERVAL_MS: "500"
+  CONCURRENCY: "4"

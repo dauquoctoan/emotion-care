@@ -1,0 +1,19 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog 
+  http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet author="emotioncare" id="1000000000001-init-all-18-tables">
+    <sqlFile path="db/changelog/sql/01-init-schema.sql" relativeToChangelogFile="false"/>
+  </changeSet>
+
+  <changeSet author="emotioncare" id="1000000000002-seed-initial-data">
+    <sqlFile path="db/changelog/sql/02-seed-data.sql" relativeToChangelogFile="false"/>
+  </changeSet>
+
+  <changeSet author="emotioncare" id="1000000000003-seed-sample-posts">
+    <sqlFile path="db/changelog/sql/03-sample-posts.sql" relativeToChangelogFile="false"/>
+  </changeSet>
+
+</databaseChangeLog>
