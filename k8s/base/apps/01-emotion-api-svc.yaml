@@ -1,0 +1,144 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: emotion-api-svc
+  namespace: emotion-care
+  labels:
+    app: emotion-api-svc
+    app.kubernetes.io/name: emotion-api-svc
+    app.kubernetes.io/part-of: emotion-care-platform
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: emotion-api-svc
+  template:
+    metadata:
+      labels:
+        app: emotion-api-svc
+    spec:
+      terminationGracePeriodSeconds: 45
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values: ["emotion-api-svc"]
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: api
+          image: emotioncare/emotion-api-svc:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: emotion-common-config
+            - secretRef:
+                name: emotion-secrets
+          env:
+            - name: SERVER_PORT
+              value: "8080"
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://$(DB_HOST):$(DB_PORT)/$(DB_NAME)?reWriteBatchedInserts=true"
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: emotion-secrets
+                  key: DB_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: emotion-secrets
+                  key: DB_PASSWORD
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:+UseG1GC -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -Duser.timezone=Asia/Ho_Chi_Minh"
+          resources:
+            requests:
+              cpu: "300m"
+              memory: "512Mi"
+            limits:
+              cpu: "1500m"
+              memory: "1024Mi"
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 10"]
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 20
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: emotion-api-svc
+  namespace: emotion-care
+  labels:
+    app: emotion-api-svc
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  selector:
+    app: emotion-api-svc
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: emotion-api-svc-pdb
+  namespace: emotion-care
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: emotion-api-svc
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: emotion-api-svc-hpa
+  namespace: emotion-care
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: emotion-api-svc
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

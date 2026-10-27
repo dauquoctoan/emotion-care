@@ -1,0 +1,60 @@
+# =============================================================================
+# Root .gitignore for Emotion Care Monorepo
+# =============================================================================
+
+# --- Java / Maven ---
+**/target/
+target/
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven wrapper
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# --- IDEs & Editors ---
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Golang (workers-go) ---
+workers-go/**/bin/
+workers-go/**/dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# --- Node / Mobile (mobile & frontend) ---
+**/node_modules/
+node_modules/
+.expo/
+.expo-shared/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Environment & Local Secrets ---
+.env
+.env.local
+.env.*.local

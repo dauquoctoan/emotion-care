@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: emotion-care
+
+resources:
+  - 00-namespace.yaml
+  - 01-configmap.yaml
+  - 02-secrets.yaml
+  - 03-ingress.yaml
+  - apps/01-emotion-api-svc.yaml
+  - apps/02-outbox-relay.yaml
+  - apps/03-notification-worker.yaml

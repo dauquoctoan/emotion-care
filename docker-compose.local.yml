@@ -1,0 +1,137 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # 1. DATABASE: PostgreSQL 16 (PostGIS)
+  # ==========================================
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: emotion-postgres-local
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: emotion_care
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./database/migrations:/docker-entrypoint-initdb.d:ro
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - emotion_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d emotion_care"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # 2. CACHE & RATE LIMIT: Redis 7
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: emotion-redis-local
+    restart: always
+    command: ["redis-server", "--requirepass", "redispassword"]
+    ports:
+      - "6379:6379"
+    networks:
+      - emotion_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redispassword", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # 3. MESSAGE BROKER: Apache Kafka (KRaft Mode)
+  # ==========================================
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: emotion-kafka-local
+    restart: always
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    networks:
+      - emotion_network
+
+  # ==========================================
+  # 4. VECTOR & SEMANTIC SEARCH: Elasticsearch 8
+  # ==========================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    container_name: emotion-elasticsearch-local
+    restart: always
+    environment:
+      - node.name=emotion-es-node1
+      - cluster.name=emotion-es-cluster
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - emotion_network
+
+  # ==========================================
+  # 5. CORE BUSINESS API: Java Spring Boot 3
+  # ==========================================
+  api:
+    build:
+      context: ./backend-java
+      dockerfile: emotion-api-svc/Dockerfile
+    container_name: emotion-api-local
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: emotion_care
+      DB_USER: postgres
+      DB_PASSWORD: postgrespassword
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: redispassword
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - emotion_network
+
+networks:
+  emotion_network:
+    name: emotion_network
+    driver: bridge
+
+volumes:
+  postgres_data:
+  es_data:
