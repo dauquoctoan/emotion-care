@@ -1,14 +1,14 @@
 <#
 .SYNOPSIS
-  Khởi động toàn bộ Database, Backend Java và Go Workers cho Emotion Care Platform
+  Start all Services: Docker (Postgres, Redis, Kafka), Spring Boot API, and Go Workers
 #>
 
 Write-Host "=====================================================" -ForegroundColor Cyan
 Write-Host "  EMOTION CARE PLATFORM - START ALL SERVICES" -ForegroundColor Cyan
 Write-Host "=====================================================" -ForegroundColor Cyan
 
-# 1. Kiểm tra Docker
-Write-Host "[1/4] Kiểm tra Docker engine..." -ForegroundColor Yellow
+# 1. Docker check
+Write-Host "[1/4] Checking Docker engine..." -ForegroundColor Yellow
 $dockerReady = $false
 try {
     $null = docker ps 2>&1
@@ -16,17 +16,16 @@ try {
 } catch {}
 
 if (-not $dockerReady) {
-    Write-Host "[!] Docker Desktop chưa chạy hoặc chưa sẵn sàng." -ForegroundColor Red
-    Write-Host "    Vui lòng mở Docker Desktop trên màn hình máy tính của bạn và chạy lại script này." -ForegroundColor Red
+    Write-Host "[!] Docker Desktop is not running. Please start Docker Desktop first." -ForegroundColor Red
     exit 1
 }
-Write-Host "[OK] Docker đã sẵn sàng." -ForegroundColor Green
+Write-Host "[OK] Docker is ready." -ForegroundColor Green
 
-# 2. Khởi động PostgreSQL, Redis, Kafka
-Write-Host "`n[2/4] Khởi động Database & Message Broker (PostgreSQL, Redis, Kafka)..." -ForegroundColor Yellow
+# 2. Start PostgreSQL, Redis, Kafka
+Write-Host "`n[2/4] Starting Database & Message Broker (Postgres, Redis, Kafka)..." -ForegroundColor Yellow
 docker compose -f docker-compose.local.yml up -d postgres redis kafka
 
-Write-Host "Chờ PostgreSQL sẵn sàng kết nối..." -ForegroundColor Cyan
+Write-Host "Waiting for PostgreSQL to accept connections..." -ForegroundColor Cyan
 $retries = 20
 $dbUp = $false
 for ($i = 0; $i -lt $retries; $i++) {
@@ -36,51 +35,53 @@ for ($i = 0; $i -lt $retries; $i++) {
         $dbUp = $true
         break
     }
-    Write-Host "    Đang đợi Database... ($i)" -ForegroundColor DarkGray
+    Write-Host "    Waiting for Database... ($i)" -ForegroundColor DarkGray
 }
 
 if (-not $dbUp) {
-    Write-Host "[!] Database chưa phản hồi kịp thời. Vui lòng kiểm tra docker logs emotion-postgres-local." -ForegroundColor Red
+    Write-Host "[!] Database connection timed out. Check docker logs emotion-postgres-local." -ForegroundColor Red
     exit 1
 }
-Write-Host "[OK] PostgreSQL, Redis và Kafka đã sẵn sàng hoạt động!" -ForegroundColor Green
+Write-Host "[OK] PostgreSQL, Redis, and Kafka are healthy!" -ForegroundColor Green
 
-# 3. Khởi động Backend API (Java Spring Boot)
-Write-Host "`n[3/4] Khởi động Backend Java API (Port 8080)..." -ForegroundColor Yellow
-$jarPath = ".\backend-java\emotion-api-svc\target\emotion-api-svc-1.0.0-SNAPSHOT.jar"
+# 3. Start Backend Java API
+Write-Host "`n[3/4] Starting Backend Spring Boot API (Port 8080)..." -ForegroundColor Yellow
+$jarPath = "$PSScriptRoot\backend-java\emotion-api-svc\target\emotion-api-svc-1.0.0-SNAPSHOT.jar"
 if (-not (Test-Path $jarPath)) {
-    Write-Host "Đang build Backend JAR..." -ForegroundColor Cyan
-    Push-Location .\backend-java
+    Write-Host "Building Backend JAR..." -ForegroundColor Cyan
+    Push-Location "$PSScriptRoot\backend-java"
     .\mvnw.cmd clean package -DskipTests
     Pop-Location
 }
 
-$backendProc = Start-Process java -ArgumentList "-jar", $jarPath -PassThru
-Write-Host "[OK] Backend Java đã chạy với Process ID: $($backendProc.Id)" -ForegroundColor Green
+$backendProc = Start-Process java -ArgumentList "-jar", "`"$jarPath`"" -PassThru
+Write-Host "[OK] Backend Java started with PID: $($backendProc.Id)" -ForegroundColor Green
 
-# 4. Khởi động 2 Go Workers
-Write-Host "`n[4/4] Khởi động các Go Workers..." -ForegroundColor Yellow
+# 4. Start Go Workers
+Write-Host "`n[4/4] Starting Go Workers..." -ForegroundColor Yellow
 
-$relayExe = ".\workers-go\emotion-outbox-relay\emotion-outbox-relay.exe"
+$relayDir = "$PSScriptRoot\workers-go\emotion-outbox-relay"
+$relayExe = "$relayDir\emotion-outbox-relay.exe"
 if (-not (Test-Path $relayExe)) {
-    Push-Location .\workers-go\emotion-outbox-relay
+    Push-Location $relayDir
     go build -o emotion-outbox-relay.exe
     Pop-Location
 }
-$relayProc = Start-Process $relayExe -PassThru
-Write-Host "[OK] Outbox Relay Worker đã chạy với Process ID: $($relayProc.Id)" -ForegroundColor Green
+$relayProc = Start-Process $relayExe -WorkingDirectory $relayDir -PassThru
+Write-Host "[OK] Outbox Relay Worker started with PID: $($relayProc.Id)" -ForegroundColor Green
 
-$workerExe = ".\workers-go\emotion-notification-worker\emotion-notification-worker.exe"
+$workerDir = "$PSScriptRoot\workers-go\emotion-notification-worker"
+$workerExe = "$workerDir\emotion-notification-worker.exe"
 if (-not (Test-Path $workerExe)) {
-    Push-Location .\workers-go\emotion-notification-worker
+    Push-Location $workerDir
     go build -o emotion-notification-worker.exe
     Pop-Location
 }
-$workerProc = Start-Process $workerExe -PassThru
-Write-Host "[OK] Notification Worker đã chạy với Process ID: $($workerProc.Id)" -ForegroundColor Green
+$workerProc = Start-Process $workerExe -WorkingDirectory $workerDir -PassThru
+Write-Host "[OK] Notification Worker started with PID: $($workerProc.Id)" -ForegroundColor Green
 
 Write-Host "`n=====================================================" -ForegroundColor Green
-Write-Host "  TẤT CẢ DỊCH VỤ ĐÃ ĐƯỢC KHỞI ĐỘNG THÀNH CÔNG!" -ForegroundColor Green
+Write-Host "  ALL SERVICES SUCCESSFULLY STARTED!" -ForegroundColor Green
 Write-Host "  - Swagger UI: http://localhost:8080/swagger-ui.html" -ForegroundColor Cyan
 Write-Host "  - Actuator Health: http://localhost:8080/actuator/health" -ForegroundColor Cyan
 Write-Host "=====================================================" -ForegroundColor Green
