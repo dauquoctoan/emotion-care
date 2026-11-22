@@ -6,6 +6,15 @@
 > **Ngày ban hành:** 2026-11-22  
 > **Phạm vi:** Tầm nhìn sản phẩm, Kiến trúc phân tán, Database Schema, Thuật toán, AI/RAG (API-based), DevOps
 
+### Lịch Sử Phiên Bản (Changelog & Version History)
+
+> **Chính sách quản lý phiên bản:** Mọi thay đổi đối với tài liệu kiến trúc này đều phải tạo bản snapshot lưu trữ tương ứng trong thư mục [`docs/versions/`](file:///c:/source/emotion-care/docs/versions/) với tên file định dạng `MASTER-SPECIFICATION-vX.Y.Z.md` và ghi nhận nhật ký vào bảng dưới đây.
+
+| Phiên bản | Ngày cập nhật | Tác giả / Người duyệt | Tóm tắt các thay đổi chính | Bản lưu trữ |
+| :---: | :---: | :---: | :--- | :---: |
+| **`v4.0.0`** | 2026-11-22 | Solution Architect | • Bổ sung NFRs, SLA & Data Retention Policy.<br>• Chuyển đổi AI sang mô hình API-Based (bỏ Local Ollama).<br>• Mở rộng 6 Go Workers (có feed-worker).<br>• **Đặc tả toàn diện Feed Fan-out on Write & Redis ZSET**.<br>• Chuẩn hóa API RESTful và cấu trúc 15 chương. | [v4.0.0](file:///c:/source/emotion-care/docs/versions/MASTER-SPECIFICATION-v4.0.0.md) |
+| **`v3.0.0`** | 2026-11-22 | Core Team | • Hợp nhất toàn bộ tài liệu cũ từ NestJS và các file rời rạc.<br>• Khởi tạo tài liệu Master Specification 9 chương đầu tiên. | [v3.0.0](file:///c:/source/emotion-care/docs/versions/MASTER-SPECIFICATION-v3.0.0.md) |
+
 ---
 
 # MỤC LỤC
