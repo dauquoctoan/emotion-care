@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -28,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/posts")
 @RequiredArgsConstructor
-@Tag(name = "Emotion Posts", description = "Endpoints for creating and browsing anonymous emotion posts")
+@Tag(name = "Emotion & Caption Posts", description = "Endpoints for creating, browsing, trending ranking and copying emotion captions")
 public class EmotionPostController {
 
   private final EmotionPostService postService;
@@ -54,6 +55,38 @@ public class EmotionPostController {
     String currentDeviceId = SecurityUtils.getCurrentDeviceIdString().orElse(headerDeviceId);
     Page<PostResponse> page = postService.getFeed(currentDeviceId, categoryId, tagId, pageable);
     return BaseResponse.ofPage(page);
+  }
+
+  @GetMapping("/trending")
+  @Operation(summary = "Get viral / trending caption feed")
+  public BaseResponse<List<PostResponse>> getTrendingFeed(
+      @RequestHeader(value = "x-device-id", required = false) String headerDeviceId,
+      @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+  ) {
+    String currentDeviceId = SecurityUtils.getCurrentDeviceIdString().orElse(headerDeviceId);
+    Page<PostResponse> page = postService.getTrendingFeed(currentDeviceId, pageable);
+    return BaseResponse.ofPage(page);
+  }
+
+  @GetMapping("/me")
+  @Operation(summary = "Get current device's own posts and captions history")
+  public BaseResponse<List<PostResponse>> getMyPosts(
+      @RequestHeader(value = "x-device-id", required = false) String headerDeviceId,
+      @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+  ) {
+    String currentDeviceId = SecurityUtils.getCurrentDeviceIdString().orElse(headerDeviceId);
+    Page<PostResponse> page = postService.getMyPosts(currentDeviceId, pageable);
+    return BaseResponse.ofPage(page);
+  }
+
+  @PostMapping("/{id}/copy")
+  @Operation(summary = "Record caption copy event for viral ranking and Elasticsearch sync")
+  public BaseResponse<Map<String, Object>> recordPostCopy(
+      @PathVariable UUID id,
+      @RequestHeader(value = "x-device-id", required = false) String headerDeviceId
+  ) {
+    String currentDeviceId = SecurityUtils.getCurrentDeviceIdString().orElse(headerDeviceId);
+    return BaseResponse.of(postService.recordPostCopy(id, currentDeviceId));
   }
 
   @GetMapping("/{id}")

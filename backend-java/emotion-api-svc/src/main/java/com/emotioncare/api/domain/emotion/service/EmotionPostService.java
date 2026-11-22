@@ -135,6 +135,109 @@ public class EmotionPostService {
       postsPage = postRepository.findByStatusOrderByCreatedAtDesc((short) 1, pageable);
     }
 
+    return enrichPostsPage(postsPage, callerDeviceToken, pageable);
+  }
+
+  @Transactional(readOnly = true)
+  public Page<PostResponse> getTrendingFeed(String callerDeviceToken, Pageable pageable) {
+    // Trending feed ordered by active status and recency (ready for viral_score ranking)
+    Page<EmotionPostEntity> postsPage = postRepository.findByStatusOrderByCreatedAtDesc((short) 1, pageable);
+    return enrichPostsPage(postsPage, callerDeviceToken, pageable);
+  }
+
+  @Transactional(readOnly = true)
+  public Page<PostResponse> getMyPosts(String callerDeviceToken, Pageable pageable) {
+    if (StringUtils.isBlank(callerDeviceToken)) {
+      throw new BadRequestException("Device ID is required to fetch my posts");
+    }
+    UUID callerDeviceId = deviceService.findOne(callerDeviceToken)
+        .map(DeviceEntity::getId)
+        .orElseThrow(() -> new ResourceNotFoundException("Device not found with token: " + callerDeviceToken));
+
+    Page<EmotionPostEntity> postsPage = postRepository.findByDeviceIdOrderByCreatedAtDesc(callerDeviceId, pageable);
+    return enrichPostsPage(postsPage, callerDeviceToken, pageable);
+  }
+
+  @Transactional
+  public Map<String, Object> recordPostCopy(UUID postId, String callerDeviceToken) {
+    EmotionPostEntity post = postRepository.findById(postId)
+        .orElseThrow(() -> new ResourceNotFoundException("Emotion post not found with ID: " + postId));
+
+    String actorToken = StringUtils.isNotBlank(callerDeviceToken)
+        ? callerDeviceToken
+        : SecurityUtils.getCurrentDeviceIdString().orElse("ANONYMOUS");
+
+    Map<String, Object> payload = new HashMap<>();
+    payload.put("postId", postId.toString());
+    payload.put("postAuthorDeviceId", post.getDeviceId().toString());
+    payload.put("actorDeviceId", actorToken);
+    payload.put("timestamp", Instant.now().toString());
+
+    OutboxEventEntity outboxEvent = OutboxEventEntity.builder()
+        .aggregateType("POST")
+        .aggregateId(postId.toString())
+        .eventType("POST_COPIED")
+        .idempotencyKey("COPY:" + postId + ":" + actorToken + ":" + System.currentTimeMillis())
+        .payload(payload)
+        .status("pending")
+        .build();
+
+    outboxEventRepository.save(outboxEvent);
+    log.info("Recorded post copy event for post {} by {}", postId, actorToken);
+
+    return Map.of("copied", true, "postId", postId.toString());
+  }
+
+  @Transactional(readOnly = true)
+  public PostResponse getPostById(UUID postId, String callerDeviceToken) {
+    EmotionPostEntity post = postRepository.findById(postId)
+        .orElseThrow(() -> new ResourceNotFoundException("Emotion post not found with ID: " + postId));
+
+    List<EmotionPostTagEntity> postTags = postTagRepository.findByIdPostId(postId);
+    List<CategoryResponse.TagResponse> tags = categoryMapper.toTagResponseList(
+        postTags.stream().map(EmotionPostTagEntity::getTag).toList()
+    );
+
+    List<Object[]> countRows = postReactionRepository.countReactionsGroupByTypeId(postId);
+    Map<String, Long> reactionCounts = new HashMap<>();
+    for (Object[] row : countRows) {
+      Short rTypeId = (Short) row[0];
+      Long count = (Long) row[1];
+      reactionCounts.put(String.valueOf(rTypeId), count);
+    }
+
+    Short userReactionId = null;
+    if (StringUtils.isNotBlank(callerDeviceToken)) {
+      UUID callerDeviceId = deviceService.findOne(callerDeviceToken)
+          .map(DeviceEntity::getId)
+          .orElse(null);
+      if (callerDeviceId != null) {
+        userReactionId = postReactionRepository.findByPostIdAndDeviceId(postId, callerDeviceId)
+            .map(PostReactionEntity::getReactionTypeId)
+            .orElse(null);
+      }
+    }
+
+    return postMapper.toResponse(post, tags, reactionCounts, userReactionId);
+  }
+
+  @Transactional
+  public void deletePost(UUID postId, String callerDeviceToken) {
+    EmotionPostEntity post = postRepository.findById(postId)
+        .orElseThrow(() -> new ResourceNotFoundException("Emotion post not found with ID: " + postId));
+
+    DeviceEntity device = deviceService.findOne(callerDeviceToken)
+        .orElseThrow(() -> new ResourceNotFoundException("Device not found with token: " + callerDeviceToken));
+
+    if (!post.getDeviceId().equals(device.getId())) {
+      throw new BadRequestException("You are not authorized to delete this post");
+    }
+
+    post.setStatus((short) 0);
+    postRepository.save(post);
+  }
+
+  private Page<PostResponse> enrichPostsPage(Page<EmotionPostEntity> postsPage, String callerDeviceToken, Pageable pageable) {
     if (postsPage.isEmpty()) {
       return Page.empty(pageable);
     }
@@ -189,54 +292,5 @@ public class EmotionPostService {
     ).collect(Collectors.toList());
 
     return new PageImpl<>(responses, pageable, postsPage.getTotalElements());
-  }
-
-  @Transactional(readOnly = true)
-  public PostResponse getPostById(UUID postId, String callerDeviceToken) {
-    EmotionPostEntity post = postRepository.findById(postId)
-        .orElseThrow(() -> new ResourceNotFoundException("Emotion post not found with ID: " + postId));
-
-    List<EmotionPostTagEntity> postTags = postTagRepository.findByIdPostId(postId);
-    List<CategoryResponse.TagResponse> tags = categoryMapper.toTagResponseList(
-        postTags.stream().map(EmotionPostTagEntity::getTag).toList()
-    );
-
-    List<Object[]> countRows = postReactionRepository.countReactionsGroupByTypeId(postId);
-    Map<String, Long> reactionCounts = new HashMap<>();
-    for (Object[] row : countRows) {
-      Short rTypeId = (Short) row[0];
-      Long count = (Long) row[1];
-      reactionCounts.put(String.valueOf(rTypeId), count);
-    }
-
-    Short userReactionId = null;
-    if (StringUtils.isNotBlank(callerDeviceToken)) {
-      UUID callerDeviceId = deviceService.findOne(callerDeviceToken)
-          .map(DeviceEntity::getId)
-          .orElse(null);
-      if (callerDeviceId != null) {
-        userReactionId = postReactionRepository.findByPostIdAndDeviceId(postId, callerDeviceId)
-            .map(PostReactionEntity::getReactionTypeId)
-            .orElse(null);
-      }
-    }
-
-    return postMapper.toResponse(post, tags, reactionCounts, userReactionId);
-  }
-
-  @Transactional
-  public void deletePost(UUID postId, String callerDeviceToken) {
-    EmotionPostEntity post = postRepository.findById(postId)
-        .orElseThrow(() -> new ResourceNotFoundException("Emotion post not found with ID: " + postId));
-
-    DeviceEntity device = deviceService.findOne(callerDeviceToken)
-        .orElseThrow(() -> new ResourceNotFoundException("Device not found with token: " + callerDeviceToken));
-
-    if (!post.getDeviceId().equals(device.getId())) {
-      throw new BadRequestException("You are not authorized to delete this post");
-    }
-
-    post.setStatus((short) 0);
-    postRepository.save(post);
   }
 }
