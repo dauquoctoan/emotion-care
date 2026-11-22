@@ -1,0 +1,92 @@
+version: "3.8"
+
+services:
+  # =============================================================================
+  # 1. LOCAL LLM INFERENCE: Ollama
+  # =============================================================================
+  ollama:
+    image: ollama/ollama
+    container_name: emotion-ollama-local
+    ports:
+      - "11434:11434"
+    pull_policy: always
+    tty: true
+    restart: unless-stopped
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_ORIGINS=*
+    volumes:
+      - ollama_data:/root/.ollama
+    # Khi dùng GPU NVIDIA, có thể kích hoạt deploy section bên dưới:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  # =============================================================================
+  # 2. CHAT UI / PROMPT MANAGEMENT: Open WebUI
+  # =============================================================================
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: emotion-open-webui
+    ports:
+      - "5000:8080"
+    volumes:
+      - openwebui_data:/app/backend/data
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    depends_on:
+      - ollama
+
+  # =============================================================================
+  # 3. VECTOR DATABASE: Elasticsearch 8
+  # =============================================================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.3
+    container_name: emotion-elasticsearch-local
+    restart: unless-stopped
+    environment:
+      - node.name=es-node1
+      - cluster.name=emotion-ai-cluster
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_ai_data:/usr/share/elasticsearch/data
+
+  # =============================================================================
+  # 4. VECTOR DASHBOARD: Kibana
+  # =============================================================================
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.14.3
+    container_name: emotion-kibana-local
+    restart: unless-stopped
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
+      xpack.fleet.enabled: "false"
+      xpack.reporting.enabled: "false"
+      telemetry.enabled: "false"
+      SERVER_HOST: "0.0.0.0"
+    depends_on:
+      - elasticsearch
+
+volumes:
+  ollama_data:
+  openwebui_data:
+  es_ai_data:
