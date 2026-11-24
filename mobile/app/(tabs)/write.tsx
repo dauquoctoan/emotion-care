@@ -17,7 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type FontChoice = 'serif' | 'sans' | 'mono';
 type Atmosphere = 'obsidian' | 'sunset' | 'aurora' | 'paper';
@@ -31,6 +31,7 @@ const AI_QUOTES = [
 ];
 
 export default function CreatorStudioScreen() {
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ prefillText?: string }>();
   const [content, setContent] = useState(params.prefillText || '');
   const [fontChoice, setFontChoice] = useState<FontChoice>('serif');
@@ -134,7 +135,7 @@ export default function CreatorStudioScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Toast Notification Overlay */}
       {toastMessage && (
         <Animated.View style={[styles.toastContainer, { opacity: toastOpacity }]}>
@@ -150,7 +151,7 @@ export default function CreatorStudioScreen() {
           style={styles.headerBtn}
           activeOpacity={0.7}
         >
-          <Text style={styles.headerCloseText}>Đóng</Text>
+          <Ionicons name="chevron-back" size={20} color="#E2E8F0" />
         </TouchableOpacity>
 
         <Text style={styles.studioHeaderTitle}>CREATOR STUDIO</Text>
@@ -386,12 +387,12 @@ export default function CreatorStudioScreen() {
           <View style={{ height: 120 }} />
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: '#08090C',
   },

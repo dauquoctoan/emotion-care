@@ -13,7 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type SafeReaction = 'hug' | 'listen' | 'withYou' | null;
 
@@ -70,6 +70,7 @@ const NEARBY_POSTS: NearbyPost[] = [
 ];
 
 export default function NearbyScreen() {
+  const insets = useSafeAreaInsets();
   const [posts, setPosts] = useState<NearbyPost[]>(NEARBY_POSTS);
   const [activeMoodFilter, setActiveMoodFilter] = useState<string | null>(null);
 
@@ -147,7 +148,7 @@ export default function NearbyScreen() {
     : posts;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <Header
         eyebrow="KHÔNG GIAN AN TOÀN"
         title="Lân Cận & Chữa Lành"
@@ -320,12 +321,12 @@ export default function NearbyScreen() {
         onSelectTag={(tag) => showToast(`Tìm kiếm theo tag: ${tag}`)}
         onSearchSubmit={(q) => showToast(`Đang tìm kiếm k-NN cho: "${q}"`)}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: '#08090C',
   },

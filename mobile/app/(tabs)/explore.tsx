@@ -15,7 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface TopicCollection {
   id: string;
@@ -130,6 +130,7 @@ const TOPIC_COLLECTIONS: TopicCollection[] = [
 ];
 
 export default function TopicsScreen() {
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ collectionTitle?: string }>();
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(
     params.collectionTitle ? TOPIC_COLLECTIONS.find((t) => t.title === params.collectionTitle)?.id || null : null
@@ -175,7 +176,7 @@ export default function TopicsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <Header
         eyebrow="GIÁM TUYỂN THỦ CÔNG"
         title="Chủ Đề & Tuyển Tập"
@@ -300,12 +301,12 @@ export default function TopicsScreen() {
         onSelectTag={(tag) => showToast(`Tìm kiếm theo tag: ${tag}`)}
         onSearchSubmit={(q) => showToast(`Đang tìm kiếm k-NN cho: "${q}"`)}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: '#08090C',
   },

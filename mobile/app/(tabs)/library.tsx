@@ -18,7 +18,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type LibraryTab = 'saved' | 'myPosts' | 'settings';
 
@@ -86,6 +86,7 @@ function SettingToggle({ label, description, value, onValueChange }: SettingTogg
 }
 
 export default function LibraryScreen() {
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<LibraryTab>('saved');
   const [savedList, setSavedList] = useState<SavedItem[]>(SAVED_ITEMS);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -136,7 +137,7 @@ export default function LibraryScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <Header
         eyebrow="BỘ SƯU TẬP CỦA BẠN"
         title="Thư Viện"
@@ -494,12 +495,12 @@ export default function LibraryScreen() {
         onSelectTag={(tag) => showToast(`Tìm kiếm theo tag: ${tag}`)}
         onSearchSubmit={(q) => showToast(`Đang tìm kiếm k-NN cho: "${q}"`)}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: '#08090C',
   },

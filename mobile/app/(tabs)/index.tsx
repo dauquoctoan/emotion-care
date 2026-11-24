@@ -19,7 +19,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface CaptionItem {
   id: string;
@@ -136,6 +136,7 @@ const INITIAL_TRENDING_ITEMS: CaptionItem[] = [
 ];
 
 export default function DiscoverScreen() {
+  const insets = useSafeAreaInsets();
   const [trendingList, setTrendingList] = useState<CaptionItem[]>(INITIAL_TRENDING_ITEMS);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -243,7 +244,7 @@ export default function DiscoverScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <Header
         eyebrow="KHÁM PHÁ HÔM NAY"
         title="Words Matter"
@@ -495,12 +496,12 @@ export default function DiscoverScreen() {
         onSelectTag={(tag) => showToast(`Tìm kiếm theo tag: ${tag}`)}
         onSearchSubmit={(q) => showToast(`Đang tìm kiếm k-NN cho: "${q}"`)}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: '#08090C',
   },
