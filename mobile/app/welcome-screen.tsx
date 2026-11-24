@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -11,7 +12,7 @@ export default function WelcomeScreen() {
       <View style={styles.container}>
         <View style={styles.header}>
           <View style={styles.badge}>
-            <Text style={styles.badgeDot}>🟢</Text>
+            <View style={styles.badgeDot} />
             <Text style={styles.badgeText}>100% ẨN DANH & BẢO MẬT</Text>
           </View>
           <Text style={styles.appTitle}>Words Matter ✦</Text>
@@ -20,7 +21,7 @@ export default function WelcomeScreen() {
 
         <View style={styles.heroCard}>
           <View style={styles.heroGlowCircle}>
-            <Text style={styles.heroEmoji}>✨</Text>
+            <Ionicons name="sparkles" size={28} color="#C084FC" />
           </View>
           <Text style={styles.heroQuote}>
             “Nơi bạn có thể tự do trải lòng, gom nhặt những câu từ chữa lành và tìm thấy sự đồng điệu giữa hàng vạn tâm hồn.”
@@ -30,15 +31,15 @@ export default function WelcomeScreen() {
 
         <View style={styles.featurePills}>
           <View style={styles.featurePill}>
-            <Text style={styles.featurePillEmoji}>🔒</Text>
+            <Ionicons name="shield-checkmark-outline" size={13} color="#34D399" />
             <Text style={styles.featurePillText}>Không Cần Tài Khoản</Text>
           </View>
           <View style={styles.featurePill}>
-            <Text style={styles.featurePillEmoji}>📍</Text>
+            <Ionicons name="location-outline" size={13} color="#60A5FA" />
             <Text style={styles.featurePillText}>Vị Trí Mờ ~2km</Text>
           </View>
           <View style={styles.featurePill}>
-            <Text style={styles.featurePillEmoji}>⚡</Text>
+            <Ionicons name="flash-outline" size={13} color="#FBBF24" />
             <Text style={styles.featurePillText}>Copy 1 Chạm</Text>
           </View>
         </View>
@@ -91,7 +92,10 @@ const styles = StyleSheet.create({
     borderColor: "rgba(192, 132, 252, 0.25)",
   },
   badgeDot: {
-    fontSize: 9,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#34D399',
   },
   badgeText: {
     fontSize: 10,

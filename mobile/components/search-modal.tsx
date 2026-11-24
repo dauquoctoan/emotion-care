@@ -1,3 +1,4 @@
+import NativeGlassButton from '@/components/ui/native-glass-button';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import React, { useState } from 'react';
@@ -77,14 +78,11 @@ export default function SearchModal({
         <View style={styles.searchModalCard}>
           {/* Header Row: Back button < on the left + Search Input Bar */}
           <View style={styles.searchHeaderRow}>
-            <TouchableOpacity
+            <NativeGlassButton
               onPress={handleBackPress}
-              style={styles.backBtn}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="chevron-back" size={20} color="#E2E8F0" />
-            </TouchableOpacity>
+              size={36}
+              icon={<Ionicons name="chevron-back" size={20} color="#F8FAFC" />}
+            />
 
             <View style={styles.searchInputRow}>
               <Ionicons name="search" size={17} color="#C084FC" />

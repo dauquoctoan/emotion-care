@@ -7,6 +7,7 @@ import * as Haptics from 'expo-haptics';
 import React, { useState } from 'react';
 import {
   Animated,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,7 +20,7 @@ type SafeReaction = 'hug' | 'listen' | 'withYou' | null;
 
 interface NearbyPost {
   id: string;
-  emoji: string;
+  icon: keyof typeof Ionicons.glyphMap;
   moodName: string;
   moodColor: string;
   distance: string;
@@ -33,7 +34,7 @@ interface NearbyPost {
 const NEARBY_POSTS: NearbyPost[] = [
   {
     id: 'nb-1',
-    emoji: '☕',
+    icon: 'cafe-outline',
     moodName: 'Mệt Mỏi',
     moodColor: '#A78BFA',
     distance: '0.8 km',
@@ -45,7 +46,7 @@ const NEARBY_POSTS: NearbyPost[] = [
   },
   {
     id: 'nb-2',
-    emoji: '🌧️',
+    icon: 'rainy-outline',
     moodName: 'Nặng Lòng',
     moodColor: '#60A5FA',
     distance: '1.2 km',
@@ -57,7 +58,7 @@ const NEARBY_POSTS: NearbyPost[] = [
   },
   {
     id: 'nb-3',
-    emoji: '🌙',
+    icon: 'moon-outline',
     moodName: 'Cô Đơn',
     moodColor: '#818CF8',
     distance: '2.4 km',
@@ -71,6 +72,7 @@ const NEARBY_POSTS: NearbyPost[] = [
 
 export default function NearbyScreen() {
   const insets = useSafeAreaInsets();
+  const headerHeight = Math.max(insets.top, Platform.OS === 'ios' ? 47 : 24) + 60;
   const [posts, setPosts] = useState<NearbyPost[]>(NEARBY_POSTS);
   const [activeMoodFilter, setActiveMoodFilter] = useState<string | null>(null);
 
@@ -100,7 +102,7 @@ export default function NearbyScreen() {
   const handleCopy = async (text: string) => {
     await Clipboard.setStringAsync(text);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    showToast('✨ Đã lưu caption vào bộ nhớ tạm!');
+    showToast('Đã lưu caption vào bộ nhớ tạm!');
   };
 
   const handleReaction = async (postId: string, reaction: SafeReaction) => {
@@ -131,9 +133,9 @@ export default function NearbyScreen() {
     );
 
     if (reaction === 'hug') {
-      showToast('🤗 Đã gửi cái ôm ấm áp đến người bạn gần đây');
+      showToast('Đã gửi cái ôm ấm áp đến người bạn gần đây');
     } else if (reaction === 'listen') {
-      showToast('👂 Đã gửi thông điệp lắng nghe');
+      showToast('Đã gửi thông điệp lắng nghe');
     }
 
     try {
@@ -148,24 +150,9 @@ export default function NearbyScreen() {
     : posts;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Header
-        eyebrow="KHÔNG GIAN AN TOÀN"
-        title="Lân Cận & Chữa Lành"
-        onOpenSearch={() => setIsSearchOpen(true)}
-        onShowToast={showToast}
-      />
-
-      {/* Floating Micro-Toast */}
-      {toastMessage && (
-        <Animated.View style={[styles.toastContainer, { opacity: toastOpacity }]}>
-          <Text style={styles.toastEmoji}>✨</Text>
-          <Text style={styles.toastText}>{toastMessage}</Text>
-        </Animated.View>
-      )}
-
+    <View style={styles.container}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: headerHeight + 8 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Radar Proximity Pill */}
@@ -199,10 +186,10 @@ export default function NearbyScreen() {
           </TouchableOpacity>
 
           {[
-            { name: 'Yêu Đời', emoji: '😊', color: '#F59E0B' },
-            { name: 'Nặng Lòng', emoji: '🌧️', color: '#60A5FA' },
-            { name: 'Mệt Mỏi', emoji: '☕', color: '#A78BFA' },
-            { name: 'Cô Đơn', emoji: '🌙', color: '#818CF8' },
+            { name: 'Yêu Đời', icon: 'sunny-outline', color: '#F59E0B' },
+            { name: 'Nặng Lòng', icon: 'rainy-outline', color: '#60A5FA' },
+            { name: 'Mệt Mỏi', icon: 'cafe-outline', color: '#A78BFA' },
+            { name: 'Cô Đơn', icon: 'moon-outline', color: '#818CF8' },
           ].map((m) => {
             const isSelected = activeMoodFilter === m.name;
             return (
@@ -218,7 +205,7 @@ export default function NearbyScreen() {
                 onPress={() => setActiveMoodFilter(isSelected ? null : m.name)}
                 activeOpacity={0.7}
               >
-                <Text style={{ fontSize: 13 }}>{m.emoji}</Text>
+                <Ionicons name={m.icon as any} size={14} color={isSelected ? '#C084FC' : m.color} />
                 <Text style={[styles.moodPillText, isSelected && { color: '#C084FC', fontWeight: '700' }]}>
                   {m.name}
                 </Text>
@@ -234,13 +221,16 @@ export default function NearbyScreen() {
               <View style={styles.cardTopRow}>
                 <View style={styles.avatarRow}>
                   <View style={[styles.emojiBubble, { backgroundColor: `${post.moodColor}20` }]}>
-                    <Text style={{ fontSize: 16 }}>{post.emoji}</Text>
+                    <Ionicons name={post.icon} size={16} color={post.moodColor} />
                   </View>
                   <View>
                     <Text style={styles.authorTitle}>Ai đó gần đây</Text>
-                    <Text style={styles.distanceMeta}>
-                      📍 {post.distance} • {post.timeAgo}
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                      <Ionicons name="location-outline" size={11} color="#94A3B8" />
+                      <Text style={styles.distanceMeta}>
+                        {post.distance} • {post.timeAgo}
+                      </Text>
+                    </View>
                   </View>
                 </View>
 
@@ -265,14 +255,18 @@ export default function NearbyScreen() {
                     onPress={() => handleReaction(post.id, 'hug')}
                     activeOpacity={0.7}
                   >
-                    <Text style={{ fontSize: 14 }}>🤗</Text>
+                    <Ionicons
+                      name={post.selectedReaction === 'hug' ? 'heart' : 'heart-outline'}
+                      size={14}
+                      color={post.selectedReaction === 'hug' ? '#C084FC' : '#94A3B8'}
+                    />
                     <Text
                       style={[
                         styles.empathyBtnText,
                         post.selectedReaction === 'hug' && styles.empathyBtnTextActive,
                       ]}
                     >
-                      Ôm ({post.hugCount})
+                      Đồng cảm ({post.hugCount})
                     </Text>
                   </TouchableOpacity>
 
@@ -285,7 +279,11 @@ export default function NearbyScreen() {
                     onPress={() => handleReaction(post.id, 'listen')}
                     activeOpacity={0.7}
                   >
-                    <Text style={{ fontSize: 14 }}>👂</Text>
+                    <Ionicons
+                      name={post.selectedReaction === 'listen' ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline'}
+                      size={14}
+                      color={post.selectedReaction === 'listen' ? '#38BDF8' : '#94A3B8'}
+                    />
                     <Text
                       style={[
                         styles.empathyBtnText,
@@ -313,6 +311,23 @@ export default function NearbyScreen() {
 
         <View style={{ height: 110 }} />
       </ScrollView>
+
+      {/* Native Liquid Glass Header with Top Gradient Fade (Telegram style) */}
+      <Header
+        eyebrow="KHÔNG GIAN AN TOÀN"
+        title="Lân Cận & Chữa Lành"
+        onOpenSearch={() => setIsSearchOpen(true)}
+        onShowToast={showToast}
+        floating={true}
+      />
+
+      {/* Floating Micro-Toast */}
+      {toastMessage && (
+        <Animated.View style={[styles.toastContainer, { top: headerHeight + 12, opacity: toastOpacity }]}>
+          <Ionicons name="sparkles" size={14} color="#C084FC" />
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </Animated.View>
+      )}
 
       {/* Search Modal (k-NN Vector Search) - Tự đóng khi bấm ra ngoài */}
       <SearchModal

@@ -19,7 +19,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface SettingToggleProps {
   label: string;
@@ -49,6 +49,8 @@ function SettingToggle({ label, description, value, onValueChange }: SettingTogg
 }
 
 export default function SettingsScreen() {
+  const insets = useSafeAreaInsets();
+  const headerHeight = Math.max(insets.top, Platform.OS === 'ios' ? 47 : 24) + 60;
   const router = useRouter();
   const deviceId = useDeviceId();
   const setting = useDeviceSetting();
@@ -89,24 +91,14 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <Header title="CÀI ĐẶT ỨNG DỤNG" showBack={true} />
-
-      {/* Floating Micro-Toast */}
-      {toastMessage && (
-        <Animated.View style={[styles.toastContainer, { opacity: toastOpacity }]}>
-          <Text style={styles.toastEmoji}>✨</Text>
-          <Text style={styles.toastText}>{toastMessage}</Text>
-        </Animated.View>
-      )}
-
+    <View style={styles.safeArea}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: headerHeight + 8 }]}
           showsVerticalScrollIndicator={false}
         >
           {/* Identity & Hardware ID Card */}
@@ -118,7 +110,10 @@ export default function SettingsScreen() {
               <View style={{ flex: 1 }}>
                 <View style={styles.badgeRow}>
                   <Text style={styles.verifiedBadge}>BẢO MẬT PHẦN CỨNG</Text>
-                  <Text style={styles.privateText}>🟢 Ẩn Danh Tuyệt Đối</Text>
+                  <View style={styles.privateBadgeWrap}>
+                    <View style={styles.greenPulseDot} />
+                    <Text style={styles.privateText}>Ẩn Danh Tuyệt Đối</Text>
+                  </View>
                 </View>
                 <Text style={styles.profileName}>Thiết Bị Của Bạn</Text>
               </View>
@@ -194,7 +189,7 @@ export default function SettingsScreen() {
                 activeOpacity={0.8}
               >
                 <View style={styles.modeCardHeader}>
-                  <Text style={styles.modeEmoji}>⚡</Text>
+                  <Ionicons name="flash-outline" size={16} color={activeMode === 'DUAL_MODE' ? '#FBBF24' : '#94A3B8'} />
                   <Text style={[styles.modeTitle, activeMode === 'DUAL_MODE' && styles.modeTitleActive]}>
                     Chế Độ Kép (Dual-Mode)
                   </Text>
@@ -212,7 +207,7 @@ export default function SettingsScreen() {
                 activeOpacity={0.8}
               >
                 <View style={styles.modeCardHeader}>
-                  <Text style={styles.modeEmoji}>🌿</Text>
+                  <Ionicons name="leaf-outline" size={16} color={activeMode === 'EMOTION_ONLY' ? '#34D399' : '#94A3B8'} />
                   <Text style={[styles.modeTitle, activeMode === 'EMOTION_ONLY' && styles.modeTitleActive]}>
                     Chữa Lành Thuần Túy
                   </Text>
@@ -230,7 +225,7 @@ export default function SettingsScreen() {
                 activeOpacity={0.8}
               >
                 <View style={styles.modeCardHeader}>
-                  <Text style={styles.modeEmoji}>🔥</Text>
+                  <Ionicons name="flame-outline" size={16} color={activeMode === 'SOCIAL_CAPTION' ? '#F87171' : '#94A3B8'} />
                   <Text style={[styles.modeTitle, activeMode === 'SOCIAL_CAPTION' && styles.modeTitleActive]}>
                     Caption Sáng Tạo
                   </Text>
@@ -311,7 +306,18 @@ export default function SettingsScreen() {
           <View style={{ height: 40 }} />
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+
+      {/* Native Liquid Glass Header with Top Gradient Fade */}
+      <Header title="CÀI ĐẶT ỨNG DỤNG" showBack={true} floating={true} />
+
+      {/* Floating Micro-Toast */}
+      {toastMessage && (
+        <Animated.View style={[styles.toastContainer, { top: headerHeight + 12, opacity: toastOpacity }]}>
+          <Ionicons name="sparkles" size={14} color="#C084FC" />
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </Animated.View>
+      )}
+    </View>
   );
 }
 
@@ -390,6 +396,17 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#C084FC',
     letterSpacing: 0.5,
+  },
+  privateBadgeWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  greenPulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#34D399',
   },
   privateText: {
     fontSize: 10,

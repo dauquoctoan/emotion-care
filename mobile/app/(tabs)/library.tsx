@@ -6,10 +6,12 @@ import { DeviceSetting } from '@/types/type';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  Platform,
   ScrollView,
   StyleSheet,
   Switch,
@@ -87,11 +89,29 @@ function SettingToggle({ label, description, value, onValueChange }: SettingTogg
 
 export default function LibraryScreen() {
   const insets = useSafeAreaInsets();
+  const headerHeight = Math.max(insets.top, Platform.OS === 'ios' ? 47 : 24) + 60;
   const [activeTab, setActiveTab] = useState<LibraryTab>('saved');
   const [savedList, setSavedList] = useState<SavedItem[]>(SAVED_ITEMS);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastOpacity = useState(new Animated.Value(0))[0];
+
+  // Segmented Control Sliding Animation
+  const [segmentWidth, setSegmentWidth] = useState(0);
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const tabWidth = segmentWidth > 0 ? (segmentWidth - 6) / 3 : 0;
+
+  useEffect(() => {
+    if (tabWidth > 0) {
+      const targetIndex = activeTab === 'saved' ? 0 : activeTab === 'myPosts' ? 1 : 2;
+      Animated.spring(slideAnim, {
+        toValue: targetIndex * tabWidth,
+        useNativeDriver: true,
+        speed: 20,
+        bounciness: 4,
+      }).start();
+    }
+  }, [activeTab, tabWidth]);
 
   const deviceId = useDeviceId();
   const setting = useDeviceSetting();
@@ -120,7 +140,7 @@ export default function LibraryScreen() {
   const handleCopy = async (text: string) => {
     await Clipboard.setStringAsync(text);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    showToast('✨ Đã lưu caption vào bộ nhớ tạm!');
+    showToast('Đã lưu caption vào bộ nhớ tạm!');
   };
 
   const handleRemoveSaved = (id: string) => {
@@ -137,31 +157,16 @@ export default function LibraryScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Header
-        eyebrow="BỘ SƯU TẬP CỦA BẠN"
-        title="Thư Viện"
-        onOpenSearch={() => setIsSearchOpen(true)}
-        onShowToast={showToast}
-      />
-
-      {/* Floating Micro-Toast */}
-      {toastMessage && (
-        <Animated.View style={[styles.toastContainer, { opacity: toastOpacity }]}>
-          <Text style={styles.toastEmoji}>✨</Text>
-          <Text style={styles.toastText}>{toastMessage}</Text>
-        </Animated.View>
-      )}
-
+    <View style={styles.container}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: headerHeight + 8 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* User Alias & Device Profile Card */}
         <View style={styles.profileCard}>
           <View style={styles.profileTopRow}>
             <View style={styles.avatarGlowCircle}>
-              <Text style={styles.avatarEmoji}>✍️</Text>
+              <Ionicons name="sparkles" size={18} color="#C084FC" />
             </View>
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={styles.authorAliasText}>
@@ -206,45 +211,95 @@ export default function LibraryScreen() {
           </View>
         </View>
 
-        {/* 3-Section Segment Switcher: Saved | My Posts | Settings */}
-        <View style={styles.segmentWrapper}>
+        {/* 3-Section Segment Switcher: Saved | My Posts | Settings with Sliding Pill Animation */}
+        <View
+          style={styles.segmentWrapper}
+          onLayout={(e) => setSegmentWidth(e.nativeEvent.layout.width)}
+        >
+          {/* Animated Sliding Active Indicator Pill */}
+          {tabWidth > 0 && (
+            <Animated.View
+              style={[
+                styles.activeSliderPill,
+                {
+                  width: tabWidth,
+                  transform: [{ translateX: slideAnim }],
+                },
+              ]}
+              pointerEvents="none"
+            >
+              <LinearGradient
+                colors={['rgba(30, 41, 59, 0.95)', 'rgba(15, 23, 42, 0.98)']}
+                style={StyleSheet.absoluteFill}
+              />
+              {/* Glass specular top highlight */}
+              <LinearGradient
+                colors={['rgba(255, 255, 255, 0.16)', 'rgba(255, 255, 255, 0.02)']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+            </Animated.View>
+          )}
+
           <TouchableOpacity
-            style={[styles.segmentBtn, activeTab === 'saved' && styles.segmentBtnActive]}
+            style={styles.segmentBtn}
             onPress={() => {
-              Haptics.selectionAsync();
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               setActiveTab('saved');
             }}
-            activeOpacity={0.8}
+            activeOpacity={0.75}
           >
-            <Text style={[styles.segmentText, activeTab === 'saved' && styles.segmentTextActive]}>
-              🔖 Đã Lưu ({savedList.length})
-            </Text>
+            <View style={styles.segmentContentRow}>
+              <Ionicons
+                name="bookmark"
+                size={12}
+                color={activeTab === 'saved' ? '#C084FC' : '#64748B'}
+              />
+              <Text style={[styles.segmentText, activeTab === 'saved' && styles.segmentTextActive]}>
+                Đã Lưu ({savedList.length})
+              </Text>
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.segmentBtn, activeTab === 'myPosts' && styles.segmentBtnActive]}
+            style={styles.segmentBtn}
             onPress={() => {
-              Haptics.selectionAsync();
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               setActiveTab('myPosts');
             }}
-            activeOpacity={0.8}
+            activeOpacity={0.75}
           >
-            <Text style={[styles.segmentText, activeTab === 'myPosts' && styles.segmentTextActive]}>
-              📝 Đã Đăng
-            </Text>
+            <View style={styles.segmentContentRow}>
+              <Ionicons
+                name="document-text"
+                size={12}
+                color={activeTab === 'myPosts' ? '#C084FC' : '#64748B'}
+              />
+              <Text style={[styles.segmentText, activeTab === 'myPosts' && styles.segmentTextActive]}>
+                Đã Đăng
+              </Text>
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.segmentBtn, activeTab === 'settings' && styles.segmentBtnActive]}
+            style={styles.segmentBtn}
             onPress={() => {
-              Haptics.selectionAsync();
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               setActiveTab('settings');
             }}
-            activeOpacity={0.8}
+            activeOpacity={0.75}
           >
-            <Text style={[styles.segmentText, activeTab === 'settings' && styles.segmentTextActive]}>
-              ⚙️ Cài Đặt
-            </Text>
+            <View style={styles.segmentContentRow}>
+              <Ionicons
+                name="options-outline"
+                size={12}
+                color={activeTab === 'settings' ? '#C084FC' : '#64748B'}
+              />
+              <Text style={[styles.segmentText, activeTab === 'settings' && styles.segmentTextActive]}>
+                Cài Đặt
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -252,7 +307,7 @@ export default function LibraryScreen() {
         {activeTab === 'saved' && (
           savedList.length === 0 ? (
             <View style={styles.emptyStateBox}>
-              <Text style={styles.emptyEmoji}>📂</Text>
+              <Ionicons name="file-tray-outline" size={36} color="#64748B" style={{ marginBottom: 6 }} />
               <Text style={styles.emptyTitle}>Chưa có caption nào được lưu</Text>
               <Text style={styles.emptySubtext}>
                 Nhấn nút sao chép hoặc lưu trên các bài viết để lưu trữ tại đây.
@@ -297,7 +352,7 @@ export default function LibraryScreen() {
         {/* ================= SECTION 2: MY POSTS ================= */}
         {activeTab === 'myPosts' && (
           <View style={styles.emptyStateBox}>
-            <Text style={styles.emptyEmoji}>✨</Text>
+            <Ionicons name="create-outline" size={36} color="#64748B" style={{ marginBottom: 6 }} />
             <Text style={styles.emptyTitle}>Mở Creator Studio để viết bài</Text>
             <Text style={styles.emptySubtext}>
               Các bài đăng từ Creator Studio sẽ được phân phối theo thuật toán và xếp hạng tại đây.
@@ -369,7 +424,7 @@ export default function LibraryScreen() {
                   activeOpacity={0.8}
                 >
                   <View style={styles.modeCardHeader}>
-                    <Text style={styles.modeEmoji}>⚡</Text>
+                    <Ionicons name="sparkles" size={17} color="#C084FC" />
                     <Text style={[styles.modeTitle, activeMode === 'DUAL_MODE' && styles.modeTitleActive]}>
                       Chế Độ Kép (Dual-Mode)
                     </Text>
@@ -387,7 +442,7 @@ export default function LibraryScreen() {
                   activeOpacity={0.8}
                 >
                   <View style={styles.modeCardHeader}>
-                    <Text style={styles.modeEmoji}>🌿</Text>
+                    <Ionicons name="leaf-outline" size={17} color="#34D399" />
                     <Text style={[styles.modeTitle, activeMode === 'EMOTION_ONLY' && styles.modeTitleActive]}>
                       Chữa Lành Thuần Túy
                     </Text>
@@ -405,7 +460,7 @@ export default function LibraryScreen() {
                   activeOpacity={0.8}
                 >
                   <View style={styles.modeCardHeader}>
-                    <Text style={styles.modeEmoji}>🔥</Text>
+                    <Ionicons name="trending-up-outline" size={17} color="#F43F5E" />
                     <Text style={[styles.modeTitle, activeMode === 'SOCIAL_CAPTION' && styles.modeTitleActive]}>
                       Caption Sáng Tạo
                     </Text>
@@ -487,6 +542,28 @@ export default function LibraryScreen() {
 
         <View style={{ height: 110 }} />
       </ScrollView>
+
+      {/* Native Liquid Glass Header with Top Gradient Fade (Telegram style) */}
+      <Header
+        eyebrow="BỘ SƯU TẬP CỦA BẠN"
+        title="Thư Viện"
+        pillActionText="Sửa"
+        onPillAction={() => {
+          setActiveTab('settings');
+          showToast('Chuyển sang chỉnh sửa thông tin & cài đặt');
+        }}
+        onOpenSearch={() => setIsSearchOpen(true)}
+        onShowToast={showToast}
+        floating={true}
+      />
+
+      {/* Floating Micro-Toast */}
+      {toastMessage && (
+        <Animated.View style={[styles.toastContainer, { top: headerHeight + 12, opacity: toastOpacity }]}>
+          <Ionicons name="sparkles" size={14} color="#C084FC" />
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </Animated.View>
+      )}
 
       {/* Search Modal (k-NN Vector Search) - Tự đóng khi bấm ra ngoài */}
       <SearchModal
@@ -616,7 +693,24 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 3,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  activeSliderPill: {
+    position: 'absolute',
+    top: 3,
+    left: 3,
+    bottom: 3,
+    borderRadius: 17,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(192, 132, 252, 0.35)',
+    shadowColor: '#C084FC',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
   segmentBtn: {
     flex: 1,
@@ -624,11 +718,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 17,
+    zIndex: 2,
   },
-  segmentBtnActive: {
-    backgroundColor: '#1E293B',
-    borderWidth: 1,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+  segmentContentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
   segmentText: {
     fontSize: 11,

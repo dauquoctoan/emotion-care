@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface TopicCollection {
   id: string;
-  emoji: string;
+  icon: keyof typeof Ionicons.glyphMap;
   tag: string;
   title: string;
   desc: string;
@@ -31,7 +31,7 @@ interface TopicCollection {
 const TOPIC_COLLECTIONS: TopicCollection[] = [
   {
     id: 't-1',
-    emoji: '🌧️',
+    icon: 'rainy-outline',
     tag: 'Cho ngày mưa',
     title: 'Những câu chữ dành cho ngày mưa',
     desc: 'Lắng đọng cùng tiếng mưa rơi ngoài hiên, gom góp lại những vụn vỡ dịu dàng.',
@@ -60,7 +60,7 @@ const TOPIC_COLLECTIONS: TopicCollection[] = [
   },
   {
     id: 't-2',
-    emoji: '☕',
+    icon: 'cafe-outline',
     tag: 'Trạm dừng chân',
     title: 'Bình yên thôi cũng đã đủ',
     desc: 'Không cần quá rực rỡ, chỉ cần một góc nhỏ ấm áp và bình yên trong tâm trí.',
@@ -83,7 +83,7 @@ const TOPIC_COLLECTIONS: TopicCollection[] = [
   },
   {
     id: 't-3',
-    emoji: '🚀',
+    icon: 'flame-outline',
     tag: 'Khát vọng',
     title: 'Tuổi trẻ và những ngã rẽ',
     desc: 'Những câu từ tiếp thêm lửa cho hoài bão, vượt qua nỗi sợ thất bại.',
@@ -106,7 +106,7 @@ const TOPIC_COLLECTIONS: TopicCollection[] = [
   },
   {
     id: 't-4',
-    emoji: '🌙',
+    icon: 'moon-outline',
     tag: 'Về đêm',
     title: 'Nỗi nhớ không tên giữa bốn bức tường',
     desc: 'Không gian cho những suy tư sâu lắng khi thành phố đã chìm vào giấc ngủ.',
@@ -131,6 +131,7 @@ const TOPIC_COLLECTIONS: TopicCollection[] = [
 
 export default function TopicsScreen() {
   const insets = useSafeAreaInsets();
+  const headerHeight = Math.max(insets.top, Platform.OS === 'ios' ? 47 : 24) + 60;
   const params = useLocalSearchParams<{ collectionTitle?: string }>();
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(
     params.collectionTitle ? TOPIC_COLLECTIONS.find((t) => t.title === params.collectionTitle)?.id || null : null
@@ -163,7 +164,7 @@ export default function TopicsScreen() {
     await Clipboard.setStringAsync(`${text} #EmotionCare`);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setCopiedId(id);
-    showToast('✨ Đã lưu caption vào bộ nhớ tạm kèm #EmotionCare!');
+    showToast('Đã lưu caption vào bộ nhớ tạm kèm #EmotionCare!');
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -176,24 +177,9 @@ export default function TopicsScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Header
-        eyebrow="GIÁM TUYỂN THỦ CÔNG"
-        title="Chủ Đề & Tuyển Tập"
-        onOpenSearch={() => setIsSearchOpen(true)}
-        onShowToast={showToast}
-      />
-
-      {/* Floating Micro-Toast Overlay */}
-      {toastMessage && (
-        <Animated.View style={[styles.toastContainer, { opacity: toastOpacity }]}>
-          <Text style={styles.toastEmoji}>✨</Text>
-          <Text style={styles.toastText}>{toastMessage}</Text>
-        </Animated.View>
-      )}
-
+    <View style={styles.container}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: headerHeight + 8 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Intro Banner */}
@@ -226,7 +212,9 @@ export default function TopicsScreen() {
                   >
                     <View style={styles.topicHeaderRow}>
                       <View style={styles.topicTitleLeft}>
-                        <Text style={styles.topicEmoji}>{topic.emoji}</Text>
+                        <View style={styles.topicIconBubble}>
+                          <Ionicons name={topic.icon} size={18} color="#C084FC" />
+                        </View>
                         <View>
                           <Text style={styles.topicTagText}>{topic.tag}</Text>
                           <Text style={styles.topicMainTitle}>{topic.title}</Text>
@@ -255,10 +243,12 @@ export default function TopicsScreen() {
                           <View style={styles.quoteItemHeader}>
                             <Text style={styles.quoteAuthorText}>{q.author}</Text>
                             <TouchableOpacity
+                              style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
                               onPress={() => handleEditInStudio(q.text)}
                               activeOpacity={0.7}
                             >
-                              <Text style={styles.quoteEditLink}>Edit trong Studio ✎</Text>
+                              <Text style={styles.quoteEditLink}>Edit trong Studio</Text>
+                              <Ionicons name="create-outline" size={12} color="#94A3B8" />
                             </TouchableOpacity>
                           </View>
 
@@ -277,7 +267,7 @@ export default function TopicsScreen() {
                                 color="#FFFFFF"
                               />
                               <Text style={styles.itemCopyBtnText}>
-                                {isCopied ? '✓ Đã chép' : '1-Tap Copy'}
+                                {isCopied ? 'Đã sao chép' : '1-Tap Copy'}
                               </Text>
                             </TouchableOpacity>
                           </View>
@@ -293,6 +283,23 @@ export default function TopicsScreen() {
 
         <View style={{ height: 110 }} />
       </ScrollView>
+
+      {/* Native Liquid Glass Header with Top Gradient Fade (Telegram style) */}
+      <Header
+        eyebrow="GIÁM TUYỂN THỦ CÔNG"
+        title="Chủ Đề & Tuyển Tập"
+        onOpenSearch={() => setIsSearchOpen(true)}
+        onShowToast={showToast}
+        floating={true}
+      />
+
+      {/* Floating Micro-Toast Overlay */}
+      {toastMessage && (
+        <Animated.View style={[styles.toastContainer, { top: headerHeight + 12, opacity: toastOpacity }]}>
+          <Ionicons name="sparkles" size={14} color="#C084FC" />
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </Animated.View>
+      )}
 
       {/* Search Modal (k-NN Vector Search) - Tự đóng khi bấm ra ngoài */}
       <SearchModal
@@ -389,8 +396,15 @@ const styles = StyleSheet.create({
     gap: 12,
     flex: 1,
   },
-  topicEmoji: {
-    fontSize: 32,
+  topicIconBubble: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   topicTagText: {
     fontSize: 11,

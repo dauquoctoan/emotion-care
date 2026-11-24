@@ -1,31 +1,55 @@
+import NativeGlassButton from '@/components/ui/native-glass-button';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-interface HeaderProps {
+export interface HeaderProps {
   eyebrow?: string;
   title?: string;
   showBack?: boolean;
+  onBack?: () => void;
   onOpenSearch?: () => void;
   onShowToast?: (msg: string) => void;
+  floating?: boolean;
+  pillActionText?: string;
+  onPillAction?: () => void;
+  pillDisabled?: boolean;
+  rightIcon?: React.ReactNode;
+  onRightIconPress?: () => void;
+  rightAction?: React.ReactNode;
 }
 
 export default function Header({
-  eyebrow = 'KHÁM PHÁ HÔM NAY',
+  eyebrow,
   title = 'Words Matter',
   showBack = false,
+  onBack,
   onOpenSearch,
   onShowToast,
+  floating = true,
+  pillActionText,
+  onPillAction,
+  pillDisabled = false,
+  rightIcon,
+  onRightIconPress,
+  rightAction,
 }: HeaderProps) {
+  const insets = useSafeAreaInsets();
+  const topInset = insets.top > 0 ? insets.top : (Platform.OS === 'ios' ? 47 : 24);
+
   const handleNotificationPress = () => {
-    Haptics.selectionAsync();
     onShowToast?.('🔔 Bạn có 3 tương tác thấu cảm mới quanh khu vực');
   };
 
   const handleSearchPress = () => {
-    Haptics.selectionAsync();
     if (onOpenSearch) {
       onOpenSearch();
     } else {
@@ -33,50 +57,109 @@ export default function Header({
     }
   };
 
-  return (
-    <View style={styles.headerContainer}>
-      <View style={styles.appNavRow}>
-        {showBack ? (
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.circleBtn}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="arrow-back" size={18} color="#E2E8F0" />
-          </TouchableOpacity>
-        ) : null}
+  const handleLeftPress = () => {
+    if (onBack) {
+      onBack();
+    } else if (showBack) {
+      router.back();
+    } else {
+      router.push('/settings');
+    }
+  };
 
-        <View style={styles.titleColumn}>
-          <View style={styles.eyebrowRow}>
-            <Text style={styles.eyebrowText}>{eyebrow}</Text>
-            <View style={styles.anonBadge}>
-              <View style={styles.anonDot} />
-              <Text style={styles.anonText}>Ẩn danh</Text>
-            </View>
-          </View>
+  return (
+    <View
+      style={[
+        styles.headerWrapper,
+        floating ? styles.floatingHeader : null,
+        { paddingTop: topInset },
+      ]}
+      pointerEvents="box-none"
+    >
+      {/* 
+        Telegram Gradient: Đổ từ màu nền #08090C ở trên cùng (khu vực giờ/pin) 
+        sang trong suốt ở khoảng nửa header đổ lên. 
+        Từ giữa header trở xuống hoàn toàn trong suốt 100%.
+      */}
+      <LinearGradient
+        colors={[
+          '#08090C',
+          'rgba(8, 9, 12, 0.85)',
+          'rgba(8, 9, 12, 0.35)',
+          'rgba(8, 9, 12, 0)',
+        ]}
+        locations={[0, 0.35, 0.65, 0.95]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+
+      {/* Telegram-style Navigation Bar Row with Native Liquid Glass Buttons */}
+      <View style={styles.appNavRow} pointerEvents="box-none">
+        {/* Left Native Liquid Glass Button */}
+        <NativeGlassButton
+          onPress={handleLeftPress}
+          icon={
+            <Ionicons
+              name={showBack ? 'chevron-back' : 'grid-outline'}
+              size={showBack ? 20 : 17}
+              color="#F8FAFC"
+            />
+          }
+        />
+
+        {/* Center Title: Crisp, bold, centered like Telegram */}
+        <View style={styles.centerTitleColumn} pointerEvents="none">
+          {eyebrow ? (
+            <Text style={styles.eyebrowText} numberOfLines={1}>
+              {eyebrow}
+            </Text>
+          ) : null}
           <View style={styles.titleRow}>
-            <Text style={styles.titleText}>{title}</Text>
+            <Text style={styles.titleText} numberOfLines={1}>
+              {title}
+            </Text>
             <Text style={styles.sparkleStar}>✦</Text>
           </View>
         </View>
 
+        {/* Right Actions: Native Liquid Glass Buttons (Action Icon / Search + Pill / Notification) */}
         <View style={styles.actionsRow}>
-          <TouchableOpacity
-            style={styles.circleBtn}
-            onPress={handleSearchPress}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="search" size={16} color="#CBD5E1" />
-          </TouchableOpacity>
+          {rightAction ? (
+            rightAction
+          ) : (
+            <>
+              {/* Custom Action Icon (e.g. AI Sparkles) OR Search Icon Circle Button */}
+              {rightIcon ? (
+                <NativeGlassButton
+                  onPress={onRightIconPress || handleSearchPress}
+                  icon={rightIcon}
+                />
+              ) : (
+                <NativeGlassButton
+                  onPress={handleSearchPress}
+                  icon={<Ionicons name="search" size={16} color="#F8FAFC" />}
+                />
+              )}
 
-          <TouchableOpacity
-            style={styles.circleBtn}
-            onPress={handleNotificationPress}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="notifications-outline" size={16} color="#CBD5E1" />
-            <View style={styles.notifPulseDot} />
-          </TouchableOpacity>
+              {/* Telegram Edit / Pill Button OR Notification Glass Circle Button */}
+              {pillActionText ? (
+                <NativeGlassButton
+                  variant="pill"
+                  label={pillActionText}
+                  onPress={onPillAction || handleNotificationPress}
+                  style={pillDisabled ? { opacity: 0.6 } : undefined}
+                />
+              ) : (
+                <NativeGlassButton
+                  onPress={handleNotificationPress}
+                  badge={true}
+                  icon={<Ionicons name="notifications-outline" size={17} color="#F8FAFC" />}
+                />
+              )}
+            </>
+          )}
         </View>
       </View>
     </View>
@@ -84,70 +167,55 @@ export default function Header({
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    backgroundColor: '#08090C',
-    paddingTop: 8,
-    paddingBottom: 10,
+  headerWrapper: {
+    backgroundColor: 'transparent',
+    paddingBottom: 8,
     paddingHorizontal: 16,
-    zIndex: 30,
+    zIndex: 50,
+    overflow: 'visible',
+  },
+  floatingHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
   },
   appNavRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    minHeight: 44,
+    paddingVertical: 3,
+    overflow: 'visible',
   },
-  titleColumn: {
-    flex: 1,
-    gap: 2,
-  },
-  eyebrowRow: {
-    flexDirection: 'row',
+  centerTitleColumn: {
+    position: 'absolute',
+    left: 60,
+    right: 110,
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
   },
   eyebrowText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
     color: '#C084FC',
-    letterSpacing: 1.5,
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
-  },
-  anonBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(52, 211, 153, 0.12)',
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(52, 211, 153, 0.25)',
-  },
-  anonDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#34D399',
-  },
-  anonText: {
-    fontSize: 9,
-    color: '#34D399',
-    fontWeight: '700',
+    marginBottom: 1,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 4,
   },
   titleText: {
-    fontSize: 22,
+    fontSize: 17,
     fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: -0.5,
+    color: '#F8FAFC',
+    letterSpacing: -0.3,
   },
   sparkleStar: {
-    fontSize: 16,
+    fontSize: 13,
     color: '#FBBF24',
     fontWeight: '900',
   },
@@ -155,25 +223,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  circleBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(30, 41, 59, 0.7)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  notifPulseDot: {
-    position: 'absolute',
-    top: 7,
-    right: 7,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#A855F7',
+    overflow: 'visible',
   },
 });

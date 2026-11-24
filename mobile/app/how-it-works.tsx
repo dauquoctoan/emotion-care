@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
 import {
@@ -10,16 +11,17 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type StepCardProps = {
-  icon: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  iconColor: string;
   title: string;
   description: string;
 };
 
-function StepCard({ icon, title, description }: StepCardProps) {
+function StepCard({ icon, iconColor, title, description }: StepCardProps) {
   return (
     <View style={styles.stepCard}>
-      <View style={styles.iconCircle}>
-        <Text style={styles.iconEmoji}>{icon}</Text>
+      <View style={[styles.iconCircle, { borderColor: `${iconColor}40`, backgroundColor: `${iconColor}15` }]}>
+        <Ionicons name={icon} size={20} color={iconColor} />
       </View>
       <View style={styles.stepCardText}>
         <Text style={styles.stepTitle}>{title}</Text>
@@ -38,7 +40,7 @@ function PrivacyCard({ title, description }: PrivacyCardProps) {
   return (
     <View style={styles.privacyCard}>
       <View style={styles.lockCircle}>
-        <Text style={styles.lockEmoji}>🔒</Text>
+        <Ionicons name="shield-checkmark" size={18} color="#34D399" />
       </View>
       <View style={styles.privacyCardText}>
         <Text style={styles.privacyTitle}>{title}</Text>
@@ -58,7 +60,7 @@ export default function HowItWorksScreen() {
       >
         <View style={styles.headerSection}>
           <View style={styles.headerIconCircle}>
-            <Text style={styles.headerIconEmoji}>✦</Text>
+            <Ionicons name="sparkles" size={24} color="#C084FC" />
           </View>
           <Text style={styles.mainTitle}>Cách Hoạt Động</Text>
           <Text style={styles.mainSubtitle}>
@@ -68,22 +70,26 @@ export default function HowItWorksScreen() {
 
         <View style={styles.stepsSection}>
           <StepCard
-            icon="🌿"
+            icon="leaf-outline"
+            iconColor="#34D399"
             title="1. Thả trôi tâm trạng"
             description="Chạm vào cảm giác lúc này của bạn — an yên, cô đơn, hy vọng hay nặng lòng."
           />
           <StepCard
-            icon="✍️"
+            icon="color-wand-outline"
+            iconColor="#C084FC"
             title="2. Studio sáng tạo & AI"
             description="Tự do viết hoặc để AI hỗ trợ gieo vần, chọn phông chữ và nền màu nghệ thuật."
           />
           <StepCard
-            icon="⚡"
+            icon="flash-outline"
+            iconColor="#FBBF24"
             title="3. Copy 1 chạm & Lan tỏa"
             description="Hàng ngàn câu trích dẫn và caption sâu sắc được cập nhật mỗi ngày để bạn chia sẻ."
           />
           <StepCard
-            icon="🧭"
+            icon="navigate-outline"
+            iconColor="#60A5FA"
             title="4. Kết nối cảm xúc quanh đây"
             description="Khám phá những người bạn gần bên (~2km) đang cảm thấy thế nào qua vòng sóng an toàn."
           />

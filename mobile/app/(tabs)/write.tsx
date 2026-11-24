@@ -1,3 +1,5 @@
+import Header from '@/components/header';
+import NativeGlassButton from '@/components/ui/native-glass-button';
 import { createEmotionPost } from '@/services/api';
 import { useDeviceId } from '@/stores/user.store';
 import { getCurrentLocation } from '@/ultils';
@@ -32,6 +34,7 @@ const AI_QUOTES = [
 
 export default function CreatorStudioScreen() {
   const insets = useSafeAreaInsets();
+  const headerHeight = Math.max(insets.top, Platform.OS === 'ios' ? 47 : 24) + 60;
   const params = useLocalSearchParams<{ prefillText?: string }>();
   const [content, setContent] = useState(params.prefillText || '');
   const [fontChoice, setFontChoice] = useState<FontChoice>('serif');
@@ -66,7 +69,7 @@ export default function CreatorStudioScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const picked = AI_QUOTES[Math.floor(Math.random() * AI_QUOTES.length)];
     setContent(picked);
-    showToast('✨ AI đã gợi ý một câu từ theo tâm trạng!');
+    showToast('AI đã gợi ý một câu từ theo tâm trạng!');
   };
 
   const handlePublish = async () => {
@@ -91,7 +94,7 @@ export default function CreatorStudioScreen() {
         longitude: location.longitude || 106.7009,
         code: 'happy',
       });
-      showToast('🚀 Caption đã được xuất bản và cập nhật vào Feed!');
+      showToast('Caption đã được xuất bản và cập nhật vào Feed!');
       setTimeout(() => {
         router.push('/(tabs)');
       }, 1200);
@@ -135,44 +138,15 @@ export default function CreatorStudioScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Toast Notification Overlay */}
-      {toastMessage && (
-        <Animated.View style={[styles.toastContainer, { opacity: toastOpacity }]}>
-          <Text style={styles.toastEmoji}>✨</Text>
-          <Text style={styles.toastText}>{toastMessage}</Text>
-        </Animated.View>
-      )}
-
-      {/* Sheet Grabber & Header (Lines 496-503 in desing.html) */}
-      <View style={styles.studioHeader}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.headerBtn}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="chevron-back" size={20} color="#E2E8F0" />
-        </TouchableOpacity>
-
-        <Text style={styles.studioHeaderTitle}>CREATOR STUDIO</Text>
-
-        <TouchableOpacity
-          style={[styles.publishBtn, isPublishing && { opacity: 0.6 }]}
-          onPress={handlePublish}
-          disabled={isPublishing}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.publishBtnText}>Xuất Bản</Text>
-        </TouchableOpacity>
-      </View>
-
+    <View style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: headerHeight + 8 }]}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
           {/* Writing Canvas with Dynamic Atmosphere */}
           <View style={styles.canvasOuterBorder}>
@@ -379,7 +353,7 @@ export default function CreatorStudioScreen() {
               onPress={handleAiInspire}
               activeOpacity={0.85}
             >
-              <Text style={styles.aiInspireEmoji}>✨</Text>
+              <Ionicons name="sparkles" size={15} color="#FBBF24" />
               <Text style={styles.aiInspireBtnText}>Để AI gieo vần cảm xúc...</Text>
             </TouchableOpacity>
           </View>
@@ -387,6 +361,29 @@ export default function CreatorStudioScreen() {
           <View style={{ height: 120 }} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Telegram-style Floating Header with Liquid Glass Buttons */}
+      <Header
+        eyebrow="CREATOR STUDIO"
+        title="Xưởng Chữ"
+        showBack={true}
+        onBack={() => router.back()}
+        floating={true}
+        rightIcon={<Ionicons name="sparkles" size={16} color="#FBBF24" />}
+        onRightIconPress={handleAiInspire}
+        pillActionText={isPublishing ? 'Đang gửi...' : 'Xuất Bản'}
+        onPillAction={handlePublish}
+        pillDisabled={isPublishing}
+        onShowToast={showToast}
+      />
+
+      {/* Floating Micro-Toast */}
+      {toastMessage && (
+        <Animated.View style={[styles.toastContainer, { top: headerHeight + 12, opacity: toastOpacity }]}>
+          <Ionicons name="sparkles" size={14} color="#C084FC" />
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </Animated.View>
+      )}
     </View>
   );
 }

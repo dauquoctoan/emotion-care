@@ -47,7 +47,7 @@ const HERO_QUOTE = {
 const CURATED_COLLECTIONS = [
   {
     id: 'col-1',
-    emoji: '🌧️',
+    icon: 'rainy-outline' as keyof typeof Ionicons.glyphMap,
     subtitle: 'Cho ngày mưa',
     title: 'Những câu chữ dành cho ngày mưa',
     count: '128 câu',
@@ -56,7 +56,7 @@ const CURATED_COLLECTIONS = [
   },
   {
     id: 'col-2',
-    emoji: '☕',
+    icon: 'cafe-outline' as keyof typeof Ionicons.glyphMap,
     subtitle: 'Trạm dừng chân',
     title: 'Bình yên thôi cũng đã đủ',
     count: '94 câu',
@@ -65,7 +65,7 @@ const CURATED_COLLECTIONS = [
   },
   {
     id: 'col-3',
-    emoji: '🚀',
+    icon: 'flame-outline' as keyof typeof Ionicons.glyphMap,
     subtitle: 'Khát vọng',
     title: 'Tuổi trẻ và những ngã rẽ',
     count: '210 câu',
@@ -74,7 +74,7 @@ const CURATED_COLLECTIONS = [
   },
   {
     id: 'col-4',
-    emoji: '🌙',
+    icon: 'moon-outline' as keyof typeof Ionicons.glyphMap,
     subtitle: 'Về đêm',
     title: 'Nỗi nhớ không tên giữa bốn bức tường',
     count: '165 câu',
@@ -88,7 +88,7 @@ const INITIAL_TRENDING_ITEMS: CaptionItem[] = [
     id: 'c-1',
     author: '@tiem_ca_phe_mua',
     timeAgo: '2h trước',
-    badge: '#2 Trending 🔥',
+    badge: '#2 Trending',
     content:
       'Tuổi trẻ không cần phải luôn rực rỡ, chỉ cần đủ can đảm để sống theo cách mình muốn và không hối tiếc vì những điều chưa dám làm.',
     likes: 512,
@@ -137,6 +137,7 @@ const INITIAL_TRENDING_ITEMS: CaptionItem[] = [
 
 export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
+  const headerHeight = Math.max(insets.top, Platform.OS === 'ios' ? 47 : 24) + 60;
   const [trendingList, setTrendingList] = useState<CaptionItem[]>(INITIAL_TRENDING_ITEMS);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -170,7 +171,7 @@ export default function DiscoverScreen() {
       await Clipboard.setStringAsync(`${text} #EmotionCare`);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setCopiedId(id);
-      showToast('Đã lưu caption vào bộ nhớ tạm kèm #EmotionCare! ✨');
+      showToast('Đã lưu caption vào bộ nhớ tạm kèm #EmotionCare!');
       setTimeout(() => setCopiedId(null), 2000);
 
       // Increment local count and sync with backend if valid ID
@@ -227,7 +228,7 @@ export default function DiscoverScreen() {
           id: item.id,
           author: item.author_alias || 'Ai đó ẩn danh',
           timeAgo: 'Vừa xong',
-          badge: `#${idx + 1} Trending 🔥`,
+          badge: `#${idx + 1} Trending`,
           content: item.content,
           likes: item.total_reactions || 12,
           copies: item.copy_count || 34,
@@ -244,24 +245,9 @@ export default function DiscoverScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Header
-        eyebrow="KHÁM PHÁ HÔM NAY"
-        title="Words Matter"
-        onOpenSearch={() => setIsSearchOpen(true)}
-        onShowToast={showToast}
-      />
-
-      {/* Floating Micro-Toast Overlay */}
-      {toastMessage && (
-        <Animated.View style={[styles.toastContainer, { opacity: toastOpacity }]}>
-          <Text style={styles.toastEmoji}>✨</Text>
-          <Text style={styles.toastText}>{toastMessage}</Text>
-        </Animated.View>
-      )}
-
+    <View style={styles.container}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: headerHeight + 8 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -269,6 +255,7 @@ export default function DiscoverScreen() {
             onRefresh={handleRefresh}
             tintColor="#C084FC"
             colors={['#C084FC']}
+            progressViewOffset={headerHeight}
           />
         }
       >
@@ -313,7 +300,7 @@ export default function DiscoverScreen() {
                   color="#FFFFFF"
                 />
                 <Text style={styles.oneTapCopyBtnText}>
-                  {copiedId === HERO_QUOTE.id ? '✓ Đã chép' : '1-Tap Copy'}
+                  {copiedId === HERO_QUOTE.id ? 'Đã sao chép' : '1-Tap Copy'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -324,10 +311,12 @@ export default function DiscoverScreen() {
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionHeaderTitle}>TUYỂN TẬP BIÊN TẬP</Text>
               <TouchableOpacity
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}
                 onPress={() => router.push('/(tabs)/explore')}
                 activeOpacity={0.7}
               >
-                <Text style={styles.sectionHeaderLink}>Xem tất cả ➔</Text>
+                <Text style={styles.sectionHeaderLink}>Xem tất cả</Text>
+                <Ionicons name="chevron-forward" size={13} color="#C084FC" />
               </TouchableOpacity>
             </View>
 
@@ -356,7 +345,9 @@ export default function DiscoverScreen() {
                     style={styles.collectionGradientInner}
                   >
                     <View style={styles.collectionCardTop}>
-                      <Text style={styles.collectionEmoji}>{col.emoji}</Text>
+                      <View style={styles.collectionIconBubble}>
+                        <Ionicons name={col.icon} size={16} color="#C084FC" />
+                      </View>
                       <View style={styles.collectionCountPill}>
                         <Text style={styles.collectionCountText}>{col.count}</Text>
                       </View>
@@ -390,10 +381,12 @@ export default function DiscoverScreen() {
                       <View style={styles.cardHeaderRow}>
                         <Text style={styles.serifAccentBadge}>{item.badge}</Text>
                         <TouchableOpacity
+                          style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
                           onPress={() => handleOpenStudioWithText(item.content)}
                           activeOpacity={0.7}
                         >
-                          <Text style={styles.editInStudioLink}>Edit trong Studio ✎</Text>
+                          <Text style={styles.editInStudioLink}>Edit trong Studio</Text>
+                          <Ionicons name="create-outline" size={13} color="#C084FC" />
                         </TouchableOpacity>
                       </View>
 
@@ -414,7 +407,7 @@ export default function DiscoverScreen() {
                             color="#FFFFFF"
                           />
                           <Text style={styles.indigoCopyBtnText}>
-                            {isCopied ? '✓ Đã chép' : '1-Tap Copy'}
+                            {isCopied ? 'Đã sao chép' : '1-Tap Copy'}
                           </Text>
                         </TouchableOpacity>
                       </View>
@@ -433,6 +426,7 @@ export default function DiscoverScreen() {
                       </View>
                       {item.badge ? (
                         <View style={styles.trendingRankPill}>
+                          <Ionicons name="flame" size={11} color="#F59E0B" style={{ marginRight: 3 }} />
                           <Text style={styles.trendingRankText}>{item.badge}</Text>
                         </View>
                       ) : null}
@@ -447,7 +441,11 @@ export default function DiscoverScreen() {
                           onPress={() => handleToggleLike(item.id)}
                           activeOpacity={0.7}
                         >
-                          <Text style={styles.reactionEmojiText}>🫂</Text>
+                          <Ionicons
+                            name={item.userLiked ? 'heart' : 'heart-outline'}
+                            size={15}
+                            color={item.userLiked ? '#C084FC' : '#94A3B8'}
+                          />
                           <Text
                             style={[
                               styles.reactionCountNum,
@@ -475,7 +473,7 @@ export default function DiscoverScreen() {
                           color="#FFFFFF"
                         />
                         <Text style={styles.smallCopyBtnText}>
-                          {isCopied ? '✓ Đã chép' : 'Copy'}
+                          {isCopied ? 'Đã chép' : 'Copy'}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -488,6 +486,23 @@ export default function DiscoverScreen() {
 
         <View style={{ height: 110 }} />
       </ScrollView>
+
+      {/* Native Liquid Glass Header with Top Gradient Fade (Telegram style) */}
+      <Header
+        eyebrow="KHÁM PHÁ HÔM NAY"
+        title="Words Matter"
+        onOpenSearch={() => setIsSearchOpen(true)}
+        onShowToast={showToast}
+        floating={true}
+      />
+
+      {/* Floating Micro-Toast Overlay */}
+      {toastMessage && (
+        <Animated.View style={[styles.toastContainer, { top: headerHeight + 12, opacity: toastOpacity }]}>
+          <Ionicons name="sparkles" size={14} color="#C084FC" />
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </Animated.View>
+      )}
 
       {/* Search Modal (k-NN Vector Search) - Tự đóng khi bấm ra ngoài, không cần nút Đóng */}
       <SearchModal
@@ -676,8 +691,15 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
-  collectionEmoji: {
-    fontSize: 24,
+  collectionIconBubble: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   collectionCountPill: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',

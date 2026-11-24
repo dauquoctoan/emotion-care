@@ -14,17 +14,19 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Reaction = 'hug' | 'listen' | 'withYou' | null;
 
-const REACTIONS: { key: Reaction; icon: keyof typeof Ionicons.glyphMap; label: string; emoji: string }[] = [
-  { key: 'hug', icon: 'heart', label: 'Gửi cái ôm', emoji: '🤗' },
-  { key: 'listen', icon: 'ear-outline', label: 'Lắng nghe', emoji: '👂' },
-  { key: 'withYou', icon: 'sparkles', label: 'Ở đây cùng bạn', emoji: '🤍' },
+const REACTIONS: { key: Reaction; icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
+  { key: 'hug', icon: 'heart', label: 'Gửi cái ôm' },
+  { key: 'listen', icon: 'chatbubble-ellipses-outline', label: 'Lắng nghe' },
+  { key: 'withYou', icon: 'sparkles', label: 'Ở đây cùng bạn' },
 ];
 
 export default function ExploreDetailScreen() {
+  const insets = useSafeAreaInsets();
+  const headerHeight = Math.max(insets.top, Platform.OS === 'ios' ? 47 : 24) + 60;
   const { emoji, content, location, time, id } = useLocalSearchParams<{
     emoji: string;
     content: string;
@@ -58,7 +60,7 @@ export default function ExploreDetailScreen() {
     if (content) {
       await Clipboard.setStringAsync(content);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast('✨ Đã sao chép caption vào bộ nhớ tạm!');
+      showToast('Đã sao chép caption vào bộ nhớ tạm!');
       if (id) {
         copyPostCaption(id);
       }
@@ -86,19 +88,9 @@ export default function ExploreDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <Header title="CHI TIẾT CẢM XÚC" showBack={true} />
-
-      {/* Floating Micro-Toast */}
-      {toastMessage && (
-        <Animated.View style={[styles.toastContainer, { opacity: toastOpacity }]}>
-          <Text style={styles.toastEmoji}>✨</Text>
-          <Text style={styles.toastText}>{toastMessage}</Text>
-        </Animated.View>
-      )}
-
+    <View style={styles.safeArea}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: headerHeight + 8 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Location & Time Indicator */}
@@ -113,7 +105,13 @@ export default function ExploreDetailScreen() {
         {/* Emotion Emoji Avatar */}
         <View style={styles.emojiContainer}>
           <View style={styles.emojiCircle}>
-            <Text style={styles.emoji}>{emoji ?? '🌿'}</Text>
+            {emoji && emoji.length > 2 ? (
+              <Ionicons name={(emoji as any) || 'leaf-outline'} size={24} color="#C084FC" />
+            ) : emoji ? (
+              <Text style={styles.emoji}>{emoji}</Text>
+            ) : (
+              <Ionicons name="leaf-outline" size={24} color="#34D399" />
+            )}
           </View>
         </View>
 
@@ -144,7 +142,7 @@ export default function ExploreDetailScreen() {
                   onPress={() => handleReaction(r.key)}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.reactionEmoji}>{r.emoji}</Text>
+                  <Ionicons name={r.icon} size={20} color={isActive ? '#FFFFFF' : '#C084FC'} />
                 </TouchableOpacity>
                 <Text style={[styles.reactionLabel, isActive && styles.reactionLabelActive]}>
                   {r.label}
@@ -162,7 +160,18 @@ export default function ExploreDetailScreen() {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+
+      {/* Native Liquid Glass Header with Top Gradient Fade */}
+      <Header title="CHI TIẾT CẢM XÚC" showBack={true} floating={true} />
+
+      {/* Floating Micro-Toast */}
+      {toastMessage && (
+        <Animated.View style={[styles.toastContainer, { top: headerHeight + 12, opacity: toastOpacity }]}>
+          <Ionicons name="sparkles" size={14} color="#C084FC" />
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </Animated.View>
+      )}
+    </View>
   );
 }
 
