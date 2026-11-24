@@ -1,5 +1,6 @@
 import Header from '@/components/header';
 import SearchModal from '@/components/search-modal';
+import SlidingSegmentedControl from '@/components/ui/sliding-segmented-control';
 import { updateDeviceSetting } from '@/services/api';
 import { useDeviceId, useDeviceSetting, useDeviceStore } from '@/stores/user.store';
 import { DeviceSetting } from '@/types/type';
@@ -95,23 +96,6 @@ export default function LibraryScreen() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastOpacity = useState(new Animated.Value(0))[0];
-
-  // Segmented Control Sliding Animation
-  const [segmentWidth, setSegmentWidth] = useState(0);
-  const slideAnim = useRef(new Animated.Value(0)).current;
-  const tabWidth = segmentWidth > 0 ? (segmentWidth - 6) / 3 : 0;
-
-  useEffect(() => {
-    if (tabWidth > 0) {
-      const targetIndex = activeTab === 'saved' ? 0 : activeTab === 'myPosts' ? 1 : 2;
-      Animated.spring(slideAnim, {
-        toValue: targetIndex * tabWidth,
-        useNativeDriver: true,
-        speed: 20,
-        bounciness: 4,
-      }).start();
-    }
-  }, [activeTab, tabWidth]);
 
   const deviceId = useDeviceId();
   const setting = useDeviceSetting();
@@ -212,96 +196,17 @@ export default function LibraryScreen() {
         </View>
 
         {/* 3-Section Segment Switcher: Saved | My Posts | Settings with Sliding Pill Animation */}
-        <View
-          style={styles.segmentWrapper}
-          onLayout={(e) => setSegmentWidth(e.nativeEvent.layout.width)}
-        >
-          {/* Animated Sliding Active Indicator Pill */}
-          {tabWidth > 0 && (
-            <Animated.View
-              style={[
-                styles.activeSliderPill,
-                {
-                  width: tabWidth,
-                  transform: [{ translateX: slideAnim }],
-                },
-              ]}
-              pointerEvents="none"
-            >
-              <LinearGradient
-                colors={['rgba(30, 41, 59, 0.95)', 'rgba(15, 23, 42, 0.98)']}
-                style={StyleSheet.absoluteFill}
-              />
-              {/* Glass specular top highlight */}
-              <LinearGradient
-                colors={['rgba(255, 255, 255, 0.16)', 'rgba(255, 255, 255, 0.02)']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={StyleSheet.absoluteFill}
-              />
-            </Animated.View>
-          )}
-
-          <TouchableOpacity
-            style={styles.segmentBtn}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setActiveTab('saved');
-            }}
-            activeOpacity={0.75}
-          >
-            <View style={styles.segmentContentRow}>
-              <Ionicons
-                name="bookmark"
-                size={12}
-                color={activeTab === 'saved' ? '#C084FC' : '#64748B'}
-              />
-              <Text style={[styles.segmentText, activeTab === 'saved' && styles.segmentTextActive]}>
-                Đã Lưu ({savedList.length})
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.segmentBtn}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setActiveTab('myPosts');
-            }}
-            activeOpacity={0.75}
-          >
-            <View style={styles.segmentContentRow}>
-              <Ionicons
-                name="document-text"
-                size={12}
-                color={activeTab === 'myPosts' ? '#C084FC' : '#64748B'}
-              />
-              <Text style={[styles.segmentText, activeTab === 'myPosts' && styles.segmentTextActive]}>
-                Đã Đăng
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.segmentBtn}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setActiveTab('settings');
-            }}
-            activeOpacity={0.75}
-          >
-            <View style={styles.segmentContentRow}>
-              <Ionicons
-                name="options-outline"
-                size={12}
-                color={activeTab === 'settings' ? '#C084FC' : '#64748B'}
-              />
-              <Text style={[styles.segmentText, activeTab === 'settings' && styles.segmentTextActive]}>
-                Cài Đặt
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+        <SlidingSegmentedControl<LibraryTab>
+          options={[
+            { value: 'saved', label: 'Đã Lưu', icon: 'bookmark', badge: savedList.length },
+            { value: 'myPosts', label: 'Đã Đăng', icon: 'document-text' },
+            { value: 'settings', label: 'Cài Đặt', icon: 'options-outline' },
+          ]}
+          value={activeTab}
+          onChange={setActiveTab}
+          activeColor="#C084FC"
+          size="md"
+        />
 
         {/* ================= SECTION 1: SAVED BOOKMARKS ================= */}
         {activeTab === 'saved' && (
@@ -686,53 +591,6 @@ const styles = StyleSheet.create({
     width: 1,
     height: 24,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  segmentWrapper: {
-    flexDirection: 'row',
-    backgroundColor: '#0E1017',
-    borderRadius: 20,
-    padding: 3,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.07)',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  activeSliderPill: {
-    position: 'absolute',
-    top: 3,
-    left: 3,
-    bottom: 3,
-    borderRadius: 17,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(192, 132, 252, 0.35)',
-    shadowColor: '#C084FC',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  segmentBtn: {
-    flex: 1,
-    paddingVertical: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 17,
-    zIndex: 2,
-  },
-  segmentContentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  segmentText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  segmentTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '800',
   },
   cardsStack: {
     gap: 12,

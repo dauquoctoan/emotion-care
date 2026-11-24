@@ -5,6 +5,7 @@ import CircularMoodCarousel, {
 } from '@/components/circular-mood-carousel';
 import Header from '@/components/header';
 import NativeGlassButton from '@/components/ui/native-glass-button';
+import SlidingSegmentedControl from '@/components/ui/sliding-segmented-control';
 import { createEmotionPost, getEmotionCategories } from '@/services/api';
 import { useDeviceId } from '@/stores/user.store';
 import { getCurrentLocation } from '@/ultils';
@@ -28,9 +29,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type FontChoice = 'serif' | 'sans' | 'mono';
 type Atmosphere = 'obsidian' | 'sunset' | 'aurora' | 'paper';
-
-const FONT_OPTIONS: FontChoice[] = ['serif', 'sans', 'mono'];
-const FONT_BTN_WIDTH = 58;
 
 const AI_QUOTES = [
   'Có những ngày lặng lẽ đến mức chỉ cần một tách trà ấm cũng đủ làm dịu đi vạn sự bộn bề.',
@@ -57,22 +55,6 @@ export default function CreatorStudioScreen() {
   const opacitySunset = React.useRef(new Animated.Value(atmosphere === 'sunset' ? 1 : 0)).current;
   const opacityAurora = React.useRef(new Animated.Value(atmosphere === 'aurora' ? 1 : 0)).current;
   const opacityPaper = React.useRef(new Animated.Value(atmosphere === 'paper' ? 1 : 0)).current;
-
-  // Sliding Indicator Spring Animation for Font Style Selector
-  const fontIndicatorAnim = React.useRef(
-    new Animated.Value(FONT_OPTIONS.indexOf(fontChoice) * FONT_BTN_WIDTH)
-  ).current;
-
-  React.useEffect(() => {
-    const targetIdx = FONT_OPTIONS.indexOf(fontChoice);
-    Animated.spring(fontIndicatorAnim, {
-      toValue: targetIdx * FONT_BTN_WIDTH,
-      damping: 18,
-      stiffness: 220,
-      mass: 0.6,
-      useNativeDriver: true,
-    }).start();
-  }, [fontChoice]);
 
   React.useEffect(() => {
     Animated.parallel([
@@ -324,44 +306,21 @@ export default function CreatorStudioScreen() {
 
           {/* Contextual Customization Controls (Lines 515-550 in desing.html) */}
           <View style={styles.controlsSection}>
-            {/* 1. Font Selection with Smooth Sliding Indicator */}
+            {/* 1. Font Selection with Smooth Sliding Segmented Control */}
             <View style={styles.controlRow}>
               <Text style={styles.controlLabel}>Kiểu chữ:</Text>
-              <View style={styles.fontButtonsGroup}>
-                {/* Smooth Sliding Pill Indicator */}
-                <Animated.View
-                  style={[
-                    styles.fontIndicatorPill,
-                    { transform: [{ translateX: fontIndicatorAnim }] },
-                  ]}
-                />
-
-                {FONT_OPTIONS.map((fChoice) => {
-                  const isActive = fontChoice === fChoice;
-                  const label =
-                    fChoice === 'serif' ? 'Serif' : fChoice === 'sans' ? 'Sans' : 'Mono';
-                  return (
-                    <TouchableOpacity
-                      key={fChoice}
-                      style={styles.fontBtn}
-                      onPress={() => {
-                        Haptics.selectionAsync();
-                        setFontChoice(fChoice);
-                      }}
-                      activeOpacity={0.8}
-                    >
-                      <Text
-                        style={[
-                          styles.fontBtnText,
-                          isActive && styles.fontBtnTextActive,
-                        ]}
-                      >
-                        {label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+              <SlidingSegmentedControl<FontChoice>
+                options={[
+                  { value: 'serif', label: 'Serif' },
+                  { value: 'sans', label: 'Sans' },
+                  { value: 'mono', label: 'Mono' },
+                ]}
+                value={fontChoice}
+                onChange={setFontChoice}
+                size="sm"
+                containerStyle={{ width: 195 }}
+                activeColor="#C084FC"
+              />
             </View>
 
             {/* 2. Atmosphere Presets */}
@@ -618,44 +577,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#94A3B8',
     fontWeight: '600',
-  },
-  fontButtonsGroup: {
-    flexDirection: 'row',
-    backgroundColor: '#1E293B',
-    borderRadius: 14,
-    padding: 3,
-    position: 'relative',
-  },
-  fontIndicatorPill: {
-    position: 'absolute',
-    top: 3,
-    left: 3,
-    width: FONT_BTN_WIDTH,
-    height: 28,
-    borderRadius: 12,
-    backgroundColor: '#9333EA',
-    shadowColor: '#9333EA',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.45,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  fontBtn: {
-    width: FONT_BTN_WIDTH,
-    height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    zIndex: 1,
-  },
-  fontBtnText: {
-    fontSize: 11,
-    color: '#94A3B8',
-    fontWeight: '600',
-  },
-  fontBtnTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '800',
   },
   atmosphereCirclesRow: {
     flexDirection: 'row',
