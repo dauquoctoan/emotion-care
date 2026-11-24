@@ -1,5 +1,5 @@
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -10,40 +10,53 @@ export default function WelcomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.appTitle}>Lắng Nghe Cảm Xúc</Text>
-          <Text style={styles.appSubtitle}>Không gian an toàn của bạn</Text>
+          <View style={styles.badge}>
+            <Text style={styles.badgeDot}>🟢</Text>
+            <Text style={styles.badgeText}>100% ẨN DANH & BẢO MẬT</Text>
+          </View>
+          <Text style={styles.appTitle}>Words Matter ✦</Text>
+          <Text style={styles.appSubtitle}>Không Gian Cảm Xúc & Caption Sáng Tạo</Text>
         </View>
 
-        <View style={styles.heroContainer}>
-          <Image
-            source={{
-              uri: "https://api.builder.io/api/v1/image/assets/TEMP/63ce0dce7dbe65bdc96e98a6a46a096aa7415631?width=560",
-            }}
-            style={styles.heroImage}
-            contentFit="contain"
-          />
+        <View style={styles.heroCard}>
+          <View style={styles.heroGlowCircle}>
+            <Text style={styles.heroEmoji}>✨</Text>
+          </View>
+          <Text style={styles.heroQuote}>
+            “Nơi bạn có thể tự do trải lòng, gom nhặt những câu từ chữa lành và tìm thấy sự đồng điệu giữa hàng vạn tâm hồn.”
+          </Text>
+          <Text style={styles.heroAuthor}>— Emotion Care Platform</Text>
         </View>
 
-        <View style={styles.content}>
-          <Text style={styles.mainTitle}>
-            Chia sẻ cảm xúc của bạn trong vài giây
-          </Text>
-          <Text style={styles.description}>
-            Không áp lực. Không phán xét. Giữ ẩn danh nếu bạn muốn — chỉ cần thể
-            hiện cảm xúc một cách nhẹ nhàng.
-          </Text>
+        <View style={styles.featurePills}>
+          <View style={styles.featurePill}>
+            <Text style={styles.featurePillEmoji}>🔒</Text>
+            <Text style={styles.featurePillText}>Không Cần Tài Khoản</Text>
+          </View>
+          <View style={styles.featurePill}>
+            <Text style={styles.featurePillEmoji}>📍</Text>
+            <Text style={styles.featurePillText}>Vị Trí Mờ ~2km</Text>
+          </View>
+          <View style={styles.featurePill}>
+            <Text style={styles.featurePillEmoji}>⚡</Text>
+            <Text style={styles.featurePillText}>Copy 1 Chạm</Text>
+          </View>
         </View>
 
         <View style={styles.actions}>
           <TouchableOpacity
             style={styles.primaryButton}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
             onPress={() => router.replace("/how-it-works")}
           >
-            <Text style={styles.primaryButtonText}>Bắt Đầu</Text>
+            <Text style={styles.primaryButtonText}>Khám Phá Cách Hoạt Động</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.8}>
-            <Text style={styles.secondaryButtonText}>Tiếp Tục Ẩn Danh</Text>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            activeOpacity={0.8}
+            onPress={() => router.replace("/")}
+          >
+            <Text style={styles.secondaryButtonText}>Bắt Đầu Ngay (Ẩn Danh)</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -54,93 +67,155 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F6F3F7",
+    backgroundColor: "#08090C",
   },
   container: {
     flex: 1,
-    paddingHorizontal: 32,
-    paddingTop: 40,
-    paddingBottom: 32,
+    paddingHorizontal: 24,
+    paddingTop: 36,
+    paddingBottom: 28,
   },
   header: {
     alignItems: "center",
+    gap: 8,
+  },
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
+    backgroundColor: "#0E1017",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(192, 132, 252, 0.25)",
+  },
+  badgeDot: {
+    fontSize: 9,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#C084FC",
+    letterSpacing: 0.6,
   },
   appTitle: {
-    fontFamily: "Inter",
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#5A4A6B",
+    fontSize: 28,
+    fontWeight: "900",
+    color: "#F8FAFC",
     textAlign: "center",
+    letterSpacing: -0.5,
   },
   appSubtitle: {
-    fontFamily: "Inter",
-    fontSize: 14,
-    fontWeight: "400",
-    color: "#9B8AAB",
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#94A3B8",
     textAlign: "center",
   },
-  heroContainer: {
+  heroCard: {
+    backgroundColor: "#0E1017",
+    borderRadius: 24,
+    padding: 24,
+    marginTop: 36,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
     alignItems: "center",
-    marginTop: 28,
-  },
-  heroImage: {
-    width: 280,
-    height: 240,
-  },
-  content: {
-    alignItems: "center",
-    marginTop: 20,
     gap: 16,
+    shadowColor: "#C084FC",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 8,
   },
-  mainTitle: {
-    fontFamily: "Inter",
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#4A3D5C",
-    textAlign: "center",
-    lineHeight: 34,
+  heroGlowCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "rgba(147, 51, 234, 0.2)",
+    borderWidth: 1.5,
+    borderColor: "#C084FC",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  description: {
-    fontFamily: "Inter",
+  heroEmoji: {
+    fontSize: 28,
+  },
+  heroQuote: {
+    fontFamily: "serif",
     fontSize: 16,
-    fontWeight: "400",
-    color: "#7D6B8F",
-    textAlign: "center",
     lineHeight: 26,
+    color: "#E2E8F0",
+    textAlign: "center",
+    fontStyle: "italic",
+  },
+  heroAuthor: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#C084FC",
+    letterSpacing: 0.5,
+  },
+  featurePills: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 24,
+    flexWrap: "wrap",
+  },
+  featurePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#0E1017",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.06)",
+  },
+  featurePillEmoji: {
+    fontSize: 12,
+  },
+  featurePillText: {
+    fontSize: 11,
+    color: "#94A3B8",
+    fontWeight: "600",
   },
   actions: {
     marginTop: "auto",
     paddingTop: 32,
-    gap: 16,
+    gap: 12,
   },
   primaryButton: {
     width: "100%",
-    height: 56,
-    backgroundColor: "#B8A1C9",
-    borderRadius: 28,
+    height: 54,
+    backgroundColor: "#9333EA",
+    borderRadius: 27,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#9333EA",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
   },
   primaryButtonText: {
-    fontFamily: "Inter",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
     color: "#FFFFFF",
   },
   secondaryButton: {
     width: "100%",
-    height: 58,
-    borderRadius: 29,
-    borderWidth: 2,
-    borderColor: "#D9CFE3",
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.15)",
+    backgroundColor: "#0E1017",
     justifyContent: "center",
     alignItems: "center",
   },
   secondaryButtonText: {
-    fontFamily: "Inter",
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#9B8AAB",
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#E2E8F0",
   },
 });

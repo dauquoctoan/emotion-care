@@ -1,41 +1,36 @@
-// Fallback for using MaterialIcons on Android and web.
-
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { SymbolWeight, SymbolViewProps } from 'expo-symbols';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { ComponentProps } from 'react';
-import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
+import { type StyleProp, type TextStyle } from 'react-native';
 
-type IconMapping = Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>;
-type IconSymbolName = keyof typeof MAPPING;
+type IoniconsName = ComponentProps<typeof Ionicons>['name'];
 
-/**
- * Add your SF Symbols to Material Icons mappings here.
- * - see Material Icons in the [Icons Directory](https://icons.expo.fyi).
- * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
- */
-const MAPPING = {
+const SF_TO_IONICONS: Record<string, IoniconsName> = {
   'house.fill': 'home',
-  'paperplane.fill': 'send',
-  'chevron.left.forwardslash.chevron.right': 'code',
-  'chevron.right': 'chevron-right',
-} as IconMapping;
+  'house': 'home-outline',
+  'list.bullet': 'list',
+  'pencil': 'create-outline',
+  'paperplane.fill': 'paper-plane',
+  'chevron.left.forwardslash.chevron.right': 'code-slash',
+  'chevron.right': 'chevron-forward',
+  'sparkles': 'sparkles',
+  'compass': 'compass-outline',
+  'heart': 'heart',
+  'copy': 'copy-outline',
+  'settings': 'settings-outline',
+};
 
-/**
- * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.
- * This ensures a consistent look across platforms, and optimal resource usage.
- * Icon `name`s are based on SF Symbols and require manual mapping to Material Icons.
- */
 export function IconSymbol({
   name,
   size = 24,
   color,
   style,
 }: {
-  name: IconSymbolName;
+  name: string;
   size?: number;
-  color: string | OpaqueColorValue;
+  color: string;
   style?: StyleProp<TextStyle>;
-  weight?: SymbolWeight;
+  weight?: string;
 }) {
-  return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
+  const iconName = SF_TO_IONICONS[name] || (name as IoniconsName) || 'help-outline';
+  return <Ionicons color={color} size={size} name={iconName} style={style} />;
 }

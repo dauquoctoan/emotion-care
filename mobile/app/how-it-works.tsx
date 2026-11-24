@@ -1,4 +1,5 @@
 import { router } from "expo-router";
+import React from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -47,11 +48,7 @@ function PrivacyCard({ title, description }: PrivacyCardProps) {
   );
 }
 
-type Props = {
-  onStart?: () => void;
-};
-
-export default function HowItWorksScreen({ onStart }: Props) {
+export default function HowItWorksScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -61,46 +58,45 @@ export default function HowItWorksScreen({ onStart }: Props) {
       >
         <View style={styles.headerSection}>
           <View style={styles.headerIconCircle}>
-            <Text style={styles.headerIconEmoji}>🤍</Text>
+            <Text style={styles.headerIconEmoji}>✦</Text>
           </View>
-          <Text style={styles.mainTitle}>Đây là cách hoạt động</Text>
+          <Text style={styles.mainTitle}>Cách Hoạt Động</Text>
           <Text style={styles.mainSubtitle}>
-            Không áp lực. Không cần hồ sơ. Chỉ là cảm xúc, được chia sẻ nhẹ
-            nhàng.
+            Không áp lực. Không đăng nhập. Chỉ là câu từ & cảm xúc chân thành.
           </Text>
         </View>
 
         <View style={styles.stepsSection}>
           <StepCard
-            icon="😊"
-            title="Chọn tâm trạng"
-            description="Chạm vào cảm giác của bạn ngay bây giờ — vui vẻ, nặng nề, hy vọng, hoặc bất cứ điều gì ở giữa."
+            icon="🌿"
+            title="1. Thả trôi tâm trạng"
+            description="Chạm vào cảm giác lúc này của bạn — an yên, cô đơn, hy vọng hay nặng lòng."
           />
           <StepCard
-            icon="✏️"
-            title="Viết ghi chú (nếu bạn muốn)"
-            description="Thêm vài từ về những gì bạn đang nghĩ. Hoàn toàn tùy chọn — chỉ tâm trạng của bạn là đủ."
+            icon="✍️"
+            title="2. Studio sáng tạo & AI"
+            description="Tự do viết hoặc để AI hỗ trợ gieo vần, chọn phông chữ và nền màu nghệ thuật."
           />
           <StepCard
-            icon="✨"
-            title="Để AI giúp bạn diễn đạt"
-            description="Khó tìm từ ngữ? AI của chúng tôi nhẹ nhàng gợi ý cách diễn đạt cảm xúc của bạn."
+            icon="⚡"
+            title="3. Copy 1 chạm & Lan tỏa"
+            description="Hàng ngàn câu trích dẫn và caption sâu sắc được cập nhật mỗi ngày để bạn chia sẻ."
           />
           <StepCard
             icon="🧭"
-            title="Xem bài viết cảm xúc gần đây"
-            description="Khám phá cảm giác của những người xung quanh bạn. Bạn không bao giờ cô đơn trong những gì bạn trải nghiệm."
+            title="4. Kết nối cảm xúc quanh đây"
+            description="Khám phá những người bạn gần bên (~2km) đang cảm thấy thế nào qua vòng sóng an toàn."
           />
         </View>
 
         <View style={styles.privacySection}>
           <PrivacyCard
-            title="Luôn giữ ẩn danh"
-            description="Không cần đăng ký. Không tên, không ảnh, không hồ sơ. Chia sẻ tự do với sự đảm bảo không ai biết đó là bạn."
+            title="Tuyệt đối ẩn danh"
+            description="Không cần email hay số điện thoại. Định danh gắn liền bảo mật phần cứng của máy bạn."
           />
           <PrivacyCard
-            title="Về vị trí của bạn"
-            description="Chúng tôi chỉ sử dụng vị trí của bạn để hiển thị các bài viết cảm xúc gần đây. Nó không bao giờ được lưu trữ chính xác, không bao giờ được chia sẻ, và bạn có thể điều chỉnh bất cứ lúc nào."
+            title="Vị trí làm mờ an toàn (~2km)"
+            description="Tọa độ thực không bao giờ bị ghi lại. Chỉ làm mờ trong bán kính để giữ an toàn tuyệt đối."
           />
         </View>
 
@@ -108,10 +104,12 @@ export default function HowItWorksScreen({ onStart }: Props) {
           <TouchableOpacity
             style={styles.primaryButton}
             activeOpacity={0.85}
-            onPress={()=>{router.replace('/')}}
+            onPress={() => {
+              router.replace('/');
+            }}
           >
             <Text style={styles.primaryButtonText}>
-              Tôi đã sẵn sàng — bắt đầu thôi
+              Tôi Đã Sẵn Sàng — Bắt Đầu Thôi
             </Text>
           </TouchableOpacity>
         </View>
@@ -123,46 +121,48 @@ export default function HowItWorksScreen({ onStart }: Props) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F6F3F7",
+    backgroundColor: "#08090C",
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 32,
+    paddingTop: 28,
     paddingBottom: 40,
     gap: 24,
   },
   headerSection: {
     alignItems: "center",
-    gap: 12,
+    gap: 10,
     paddingHorizontal: 8,
   },
   headerIconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#7B5EA7",
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: "rgba(147, 51, 234, 0.2)",
+    borderWidth: 1.5,
+    borderColor: "#C084FC",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 4,
   },
   headerIconEmoji: {
-    fontSize: 26,
+    fontSize: 24,
+    color: "#C084FC",
+    fontWeight: "900",
   },
   mainTitle: {
-    fontFamily: "Inter",
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#4A3D5C",
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#F8FAFC",
     textAlign: "center",
   },
   mainSubtitle: {
-    fontFamily: "Inter",
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "400",
-    color: "#7D6B8F",
+    color: "#94A3B8",
     textAlign: "center",
     lineHeight: 22,
   },
@@ -170,23 +170,22 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   stepCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
+    backgroundColor: "#0E1017",
+    borderRadius: 18,
     padding: 16,
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 14,
-    shadowColor: "#C4B5D5",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
   },
   iconCircle: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#EDE8F5",
+    backgroundColor: "rgba(192, 132, 252, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(192, 132, 252, 0.25)",
     justifyContent: "center",
     alignItems: "center",
     flexShrink: 0,
@@ -199,76 +198,79 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   stepTitle: {
-    fontFamily: "Inter",
     fontSize: 15,
     fontWeight: "700",
-    color: "#4A3D5C",
+    color: "#F8FAFC",
     lineHeight: 20,
   },
   stepDescription: {
-    fontFamily: "Inter",
     fontSize: 13,
     fontWeight: "400",
-    color: "#7D6B8F",
+    color: "#94A3B8",
     lineHeight: 19,
   },
   privacySection: {
     gap: 12,
   },
   privacyCard: {
-    backgroundColor: "#EDE8F5",
-    borderRadius: 16,
+    backgroundColor: "rgba(16, 185, 129, 0.08)",
+    borderRadius: 18,
     padding: 16,
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 14,
+    borderWidth: 1,
+    borderColor: "rgba(16, 185, 129, 0.25)",
   },
   lockCircle: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#F5C842",
+    backgroundColor: "rgba(16, 185, 129, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(16, 185, 129, 0.3)",
     justifyContent: "center",
     alignItems: "center",
     flexShrink: 0,
   },
   lockEmoji: {
-    fontSize: 20,
+    fontSize: 18,
   },
   privacyCardText: {
     flex: 1,
     gap: 4,
   },
   privacyTitle: {
-    fontFamily: "Inter",
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
-    color: "#4A3D5C",
+    color: "#34D399",
     lineHeight: 20,
   },
   privacyDescription: {
-    fontFamily: "Inter",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "400",
-    color: "#7D6B8F",
-    lineHeight: 19,
+    color: "#94A3B8",
+    lineHeight: 18,
   },
   actions: {
-    gap: 16,
+    marginTop: 8,
     alignItems: "center",
   },
   primaryButton: {
     width: "100%",
-    height: 56,
-    backgroundColor: "#5A3E7B",
-    borderRadius: 28,
+    height: 54,
+    backgroundColor: "#9333EA",
+    borderRadius: 27,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 16,
+    shadowColor: "#9333EA",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
   },
   primaryButtonText: {
-    fontFamily: "Inter",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
     color: "#FFFFFF",
     textAlign: "center",

@@ -1,17 +1,25 @@
-import { updateDeviceSetting } from "@/services/api";
-import { useDeviceSetting, useDeviceStore } from "@/stores/user.store";
-import { DeviceSetting } from "@/types/type";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import Header from '@/components/header';
+import { updateDeviceSetting } from '@/services/api';
+import { useDeviceId, useDeviceSetting, useDeviceStore } from '@/stores/user.store';
+import { DeviceSetting } from '@/types/type';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
 import {
+  Animated,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface SettingToggleProps {
   label: string;
@@ -20,12 +28,7 @@ interface SettingToggleProps {
   onValueChange: (val: boolean) => void;
 }
 
-function SettingToggle({
-  label,
-  description,
-  value,
-  onValueChange,
-}: SettingToggleProps) {
+function SettingToggle({ label, description, value, onValueChange }: SettingToggleProps) {
   return (
     <View style={styles.toggleRow}>
       <View style={styles.toggleTextGroup}>
@@ -34,151 +37,280 @@ function SettingToggle({
       </View>
       <Switch
         value={value}
-        onValueChange={onValueChange}
-        trackColor={{ false: "#D9D0E7", true: "#7C5CBF" }}
+        onValueChange={(val) => {
+          Haptics.selectionAsync();
+          onValueChange(val);
+        }}
+        trackColor={{ false: '#27273A', true: '#9333EA' }}
         thumbColor="#FFFFFF"
-        ios_backgroundColor="#D9D0E7"
       />
-    </View>
-  );
-}
-
-interface SectionCardProps {
-  title: string;
-  subtitle: string;
-  children: React.ReactNode;
-}
-
-function SectionCard({ title, subtitle, children }: SectionCardProps) {
-  return (
-    <View style={styles.card}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <Text style={styles.sectionSubtitle}>{subtitle}</Text>
-      <View style={styles.divider} />
-      {children}
     </View>
   );
 }
 
 export default function SettingsScreen() {
   const router = useRouter();
-
+  const deviceId = useDeviceId();
   const setting = useDeviceSetting();
+  const [alias, setAlias] = useState('');
+  const [activeMode, setActiveMode] = useState<'DUAL_MODE' | 'EMOTION_ONLY' | 'SOCIAL_CAPTION'>('DUAL_MODE');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastOpacity = useState(new Animated.Value(0))[0];
 
-  function updateSetting(deviceSetting: Partial<DeviceSetting>){
-    const newDevice = {...setting, ...deviceSetting} as DeviceSetting
-    useDeviceStore
-    .getState().setSetting(newDevice);
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    Animated.sequence([
+      Animated.timing(toastOpacity, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1800),
+      Animated.timing(toastOpacity, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setToastMessage(null));
+  };
+
+  const updateSetting = (deviceSetting: Partial<DeviceSetting>) => {
+    const newDevice = { ...setting, ...deviceSetting } as DeviceSetting;
+    useDeviceStore.getState().setSetting(newDevice);
     updateDeviceSetting(newDevice);
-  }
+  };
+
+  const copyDeviceId = async () => {
+    if (deviceId) {
+      await Clipboard.setStringAsync(deviceId);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showToast('Đã chép ID ẩn danh vào bộ nhớ tạm');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.headerButton}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.headerBackArrow}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Cài Đặt</Text>
-        <TouchableOpacity style={styles.headerButton} activeOpacity={0.7}>
-          <View style={styles.helpCircle}>
-            <Text style={styles.helpIcon}>?</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
+      <Header title="CÀI ĐẶT ỨNG DỤNG" showBack={true} />
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+      {/* Floating Micro-Toast */}
+      {toastMessage && (
+        <Animated.View style={[styles.toastContainer, { opacity: toastOpacity }]}>
+          <Text style={styles.toastEmoji}>✨</Text>
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </Animated.View>
+      )}
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
       >
-        <Text style={styles.heroText}>
-          Không gian của bạn, nhịp độ của bạn. Các cài đặt này giúp bạn cảm thấy
-          an toàn và kiểm soát. Không có gì ở đây được chia sẻ với bất kỳ ai.
-        </Text>
-
-        <SectionCard
-          title="Chia Sẻ Gần Đây"
-          subtitle="Chọn cách bạn kết nối với mọi người xung quanh. Bạn luôn ẩn danh."
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          <SettingToggle
-            label="Cho phép chia sẻ gần đây"
-            description="Người khác gần đây có thể thấy bài viết của bạn (không bao giờ là danh tính của bạn)"
-            value={setting?.share_nearby || false}
-            onValueChange={(value)=>{updateSetting({share_nearby: value})}}
-          />
-          <View style={styles.innerDivider} />
-          <SettingToggle
-            label="Nhận bài viết gần đây"
-            description="Xem những gì người khác xung quanh bạn đang cảm thấy"
-            value={setting?.receive_nearby||false}
-            onValueChange={(value)=>{updateSetting({receive_nearby: value})}}
-          />
-        </SectionCard>
-
-        <SectionCard
-          title="Vị Trí Cho Nguồn Cấp"
-          subtitle="Vị trí chỉ được sử dụng để hiện thị các bài viết gần đây liên quan. Nó không bao giờ được lưu trữ hoặc chia sẻ."
-        >
-          <SettingToggle
-            label="Sử dụng vị trí cho nguồn cấp"
-            description="Cá nhân hóa nguồn cấp gần đây của bạn một cách nhẹ nhàng"
-            value={setting?.use_location||false}
-            onValueChange={(value)=>{updateSetting({use_location: value})}}
-          />
-          <View style={styles.innerDivider} />
-          <SettingToggle
-            label="Chỉ gần đúng"
-            description="Sử dụng khu vực chung, không phải vị trí chính xác của bạn"
-            value={setting?.approximate_location||false}
-            onValueChange={(value)=>{updateSetting({approximate_location: value})}}
-          />
-        </SectionCard>
-
-        <SectionCard
-          title="Tiện Nghi & AI"
-          subtitle="Các tính năng này ở đây để giúp đỡ, không bao giờ gây áp lực. Tắt chúng bất cứ lúc nào."
-        >
-          <SettingToggle
-            label="Bật gợi ý AI"
-            description="Lời nhắc nhẹ nhàng để giúp bạn diễn đạt cảm xúc"
-            value={setting?.ai_suggestion_enabled || false}
-            onValueChange={(value)=>{updateSetting({ai_suggestion_enabled: value})}}
-          />
-          <View style={styles.innerDivider} />
-          <SettingToggle
-            label="Chế độ áp lực thấp"
-            description="Giảm lời nhắc và thông báo"
-            value={setting?.low_pressure_mode || false}
-            onValueChange={(value)=>{updateSetting({low_pressure_mode: value})}}
-          />
-        </SectionCard>
-
-        <View style={styles.privacyCard}>
-          <View style={styles.privacyHeader}>
-            <View style={styles.shieldCircle}>
-              <Text style={styles.shieldIcon}>🛡️</Text>
+          {/* Identity & Hardware ID Card */}
+          <View style={styles.profileCard}>
+            <View style={styles.profileTopRow}>
+              <View style={styles.avatarGlowCircle}>
+                <Ionicons name="finger-print-outline" size={24} color="#C084FC" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={styles.badgeRow}>
+                  <Text style={styles.verifiedBadge}>BẢO MẬT PHẦN CỨNG</Text>
+                  <Text style={styles.privateText}>🟢 Ẩn Danh Tuyệt Đối</Text>
+                </View>
+                <Text style={styles.profileName}>Thiết Bị Của Bạn</Text>
+              </View>
             </View>
-            <Text style={styles.privacyTitle}>
-              Quyền riêng tư của bạn quan trọng
+
+            <View style={styles.idDisplayBox}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.idLabel}>ĐỊNH DANH PHẦN CỨNG (X-DEVICE-ID)</Text>
+                <Text style={styles.idValue} numberOfLines={1}>
+                  {deviceId || 'Đang tạo danh tính mã hóa...'}
+                </Text>
+              </View>
+              <TouchableOpacity style={styles.copyIdBtn} onPress={copyDeviceId} activeOpacity={0.7}>
+                <Ionicons name="copy-outline" size={13} color="#C084FC" />
+                <Text style={styles.copyIdBtnText}>Chép</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* 1. Author Alias Configuration */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeaderRow}>
+              <Ionicons name="pencil-outline" size={17} color="#C084FC" />
+              <Text style={styles.sectionTitle}>Bút Danh Sáng Tạo</Text>
+            </View>
+            <Text style={styles.sectionSubtitle}>
+              Khi đăng tải caption hoặc câu trích dẫn, bút danh này sẽ xuất hiện cùng bài viết thay vì ID vô danh.
+            </Text>
+
+            <View style={styles.aliasInputBox}>
+              <Text style={styles.aliasPrefix}>@</Text>
+              <TextInput
+                style={styles.aliasInput}
+                placeholder="nang_chieu, tiem_tho_dem..."
+                placeholderTextColor="#64748B"
+                value={alias}
+                onChangeText={setAlias}
+                maxLength={30}
+              />
+              {alias.length > 0 && (
+                <TouchableOpacity
+                  style={styles.saveAliasBtn}
+                  onPress={() => {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    showToast(`Đã lưu bút danh @${alias}`);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.saveAliasBtnText}>Lưu</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          {/* 2. Dual-Mode Selector */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeaderRow}>
+              <Ionicons name="layers-outline" size={17} color="#C084FC" />
+              <Text style={styles.sectionTitle}>Chế Độ Hoạt Động (Dual-Mode)</Text>
+            </View>
+            <Text style={styles.sectionSubtitle}>
+              Tùy chỉnh luồng hiển thị ưu tiên giữa giải tỏa tâm sự hoặc khám phá caption viral.
+            </Text>
+
+            <View style={styles.modeOptionGroup}>
+              <TouchableOpacity
+                style={[styles.modeCard, activeMode === 'DUAL_MODE' && styles.modeCardActive]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setActiveMode('DUAL_MODE');
+                  showToast('Đã bật Chế Độ Kép (Dual-Mode)');
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={styles.modeCardHeader}>
+                  <Text style={styles.modeEmoji}>⚡</Text>
+                  <Text style={[styles.modeTitle, activeMode === 'DUAL_MODE' && styles.modeTitleActive]}>
+                    Chế Độ Kép (Dual-Mode)
+                  </Text>
+                </View>
+                <Text style={styles.modeDesc}>Trọn vẹn cả 2 thế giới: Vừa giải tỏa tâm sự ẩn danh, vừa lan tỏa caption hay.</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modeCard, activeMode === 'EMOTION_ONLY' && styles.modeCardActive]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setActiveMode('EMOTION_ONLY');
+                  showToast('Đã chọn Chế Độ Chữa Lành Thuần Túy');
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={styles.modeCardHeader}>
+                  <Text style={styles.modeEmoji}>🌿</Text>
+                  <Text style={[styles.modeTitle, activeMode === 'EMOTION_ONLY' && styles.modeTitleActive]}>
+                    Chữa Lành Thuần Túy
+                  </Text>
+                </View>
+                <Text style={styles.modeDesc}>Tập trung vào trút bầu tâm sự, không số đếm, tự biến mất sau 7 ngày.</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modeCard, activeMode === 'SOCIAL_CAPTION' && styles.modeCardActive]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setActiveMode('SOCIAL_CAPTION');
+                  showToast('Đã chọn Chế Độ Caption Sáng Tạo');
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={styles.modeCardHeader}>
+                  <Text style={styles.modeEmoji}>🔥</Text>
+                  <Text style={[styles.modeTitle, activeMode === 'SOCIAL_CAPTION' && styles.modeTitleActive]}>
+                    Caption Sáng Tạo
+                  </Text>
+                </View>
+                <Text style={styles.modeDesc}>Ưu tiên bảng xếp hạng trending, copy 1 chạm và studio AI.</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* 3. Location Privacy Settings */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeaderRow}>
+              <Ionicons name="location-outline" size={17} color="#C084FC" />
+              <Text style={styles.sectionTitle}>Quyền Riêng Tư & Vị Trí</Text>
+            </View>
+            <Text style={styles.sectionSubtitle}>
+              Vị trí chỉ dùng để kết nối những tâm hồn đồng điệu xung quanh bạn.
+            </Text>
+
+            <SettingToggle
+              label="Sử dụng vị trí cho nguồn cấp"
+              description="Xem những gì người khác xung quanh bạn đang cảm thấy"
+              value={setting?.use_location ?? true}
+              onValueChange={(value) => updateSetting({ use_location: value })}
+            />
+            <View style={styles.innerDivider} />
+            <SettingToggle
+              label="Bán kính xấp xỉ (~2km)"
+              description="Làm mờ tọa độ chính xác để bảo vệ an toàn tối đa"
+              value={setting?.approximate_location ?? true}
+              onValueChange={(value) => updateSetting({ approximate_location: value })}
+            />
+            <View style={styles.innerDivider} />
+            <SettingToggle
+              label="Chia sẻ gần đây"
+              description="Cho phép người khác quanh khu vực đọc bài của bạn"
+              value={setting?.share_nearby ?? true}
+              onValueChange={(value) => updateSetting({ share_nearby: value })}
+            />
+          </View>
+
+          {/* 4. AI & Wellness Settings */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeaderRow}>
+              <Ionicons name="color-wand-outline" size={17} color="#C084FC" />
+              <Text style={styles.sectionTitle}>Tiện Nghi & Trợ Lý AI</Text>
+            </View>
+            <Text style={styles.sectionSubtitle}>
+              Các tính năng đồng hành nhẹ nhàng, không gây áp lực xã hội.
+            </Text>
+
+            <SettingToggle
+              label="Gợi ý cảm xúc AI"
+              description="Hiển thị nút hỗ trợ gieo vần và diễn đạt câu chữ"
+              value={setting?.ai_suggestion_enabled ?? true}
+              onValueChange={(value) => updateSetting({ ai_suggestion_enabled: value })}
+            />
+            <View style={styles.innerDivider} />
+            <SettingToggle
+              label="Chế độ áp lực thấp (Low Pressure)"
+              description="Tắt toàn bộ thông báo nhắc nhở và số lượng tương tác"
+              value={setting?.low_pressure_mode ?? false}
+              onValueChange={(value) => updateSetting({ low_pressure_mode: value })}
+            />
+          </View>
+
+          {/* 5. Privacy Guarantee Card */}
+          <View style={styles.privacyCard}>
+            <View style={styles.shieldRow}>
+              <Ionicons name="shield-checkmark" size={18} color="#34D399" />
+              <Text style={styles.privacyTitle}>Bảo Chứng Riêng Tư 100%</Text>
+            </View>
+            <Text style={styles.privacyText}>
+              Emotion Care được xây dựng dựa trên triết lý Không Tài Khoản — Không Đăng Nhập — Không Bán Dữ Liệu. Danh tính gắn liền với thiết bị phần cứng của bạn và không thể bị truy vết.
             </Text>
           </View>
-          <Text style={styles.privacyText}>
-            Chăm Sóc Cảm Xúc được thiết kế cho sự tham gia ẩn danh, áp lực thấp.
-            Không cần tài khoản. Không bán dữ liệu. Bạn ở đây theo điều kiện của
-            riêng bạn.
-          </Text>
-        </View>
 
-        <TouchableOpacity activeOpacity={0.7} style={styles.footerLink}>
-          <Text style={styles.footerLinkText}>
-            Xem lại thông tin giới thiệu & quyền riêng tư →
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -186,162 +318,270 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F6F3F7",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: "#F6F3F7",
-  },
-  headerButton: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerBackArrow: {
-    fontSize: 22,
-    color: "#4A3D5C",
-    lineHeight: 26,
-  },
-  headerTitle: {
-    fontFamily: "Inter",
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#4A3D5C",
-  },
-  helpCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 1.5,
-    borderColor: "#A89BB5",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  helpIcon: {
-    fontSize: 13,
-    color: "#A89BB5",
-    fontWeight: "600",
-    lineHeight: 16,
+    backgroundColor: '#08090C',
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 32,
-    gap: 12,
+    paddingTop: 12,
+    gap: 16,
   },
-  heroText: {
-    fontFamily: "Inter",
+  toastContainer: {
+    position: 'absolute',
+    top: 50,
+    alignSelf: 'center',
+    zIndex: 999,
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    borderWidth: 1,
+    borderColor: 'rgba(192, 132, 252, 0.4)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    shadowColor: '#C084FC',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    elevation: 10,
+  },
+  toastEmoji: {
     fontSize: 14,
-    fontWeight: "400",
-    color: "#6B5F7A",
-    lineHeight: 22,
+  },
+  toastText: {
+    color: '#E2E8F0',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  profileCard: {
+    backgroundColor: '#0E1017',
+    borderRadius: 24,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    gap: 16,
+  },
+  profileTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  avatarGlowCircle: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: 'rgba(147, 51, 234, 0.2)',
+    borderWidth: 1.5,
+    borderColor: '#C084FC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginBottom: 4,
   },
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
+  verifiedBadge: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#C084FC',
+    letterSpacing: 0.5,
+  },
+  privateText: {
+    fontSize: 10,
+    color: '#34D399',
+    fontWeight: '600',
+  },
+  profileName: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#F8FAFC',
+  },
+  idDisplayBox: {
+    backgroundColor: '#08090C',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  idLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#64748B',
+    letterSpacing: 0.6,
+    marginBottom: 3,
+  },
+  idValue: {
+    fontSize: 12,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  copyIdBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(192, 132, 252, 0.12)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(192, 132, 252, 0.25)',
+  },
+  copyIdBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#C084FC',
+  },
+  sectionCard: {
+    backgroundColor: '#0E1017',
+    borderRadius: 22,
     padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
   },
   sectionTitle: {
-    fontFamily: "Inter",
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#4A3D5C",
-    marginBottom: 6,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#F8FAFC',
   },
   sectionSubtitle: {
-    fontFamily: "Inter",
-    fontSize: 13,
-    fontWeight: "400",
-    color: "#6B5F7A",
-    lineHeight: 20,
+    fontSize: 12,
+    color: '#94A3B8',
+    lineHeight: 18,
     marginBottom: 14,
   },
-  divider: {
-    height: 1,
-    backgroundColor: "#F0EBF6",
-    marginBottom: 14,
+  modeOptionGroup: {
+    gap: 10,
+  },
+  modeCard: {
+    backgroundColor: '#121520',
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    gap: 4,
+  },
+  modeCardActive: {
+    borderColor: '#C084FC',
+    backgroundColor: 'rgba(192, 132, 252, 0.12)',
+  },
+  modeCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  modeEmoji: {
+    fontSize: 16,
+  },
+  modeTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#CBD5E1',
+  },
+  modeTitleActive: {
+    color: '#C084FC',
+    fontWeight: '700',
+  },
+  modeDesc: {
+    fontSize: 11,
+    color: '#64748B',
+    lineHeight: 16,
+  },
+  aliasInputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#08090C',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    gap: 8,
+  },
+  aliasPrefix: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#C084FC',
+  },
+  aliasInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#F8FAFC',
+    padding: 0,
+  },
+  saveAliasBtn: {
+    backgroundColor: '#9333EA',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  saveAliasBtnText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
   },
   innerDivider: {
     height: 1,
-    backgroundColor: "#F0EBF6",
-    marginVertical: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    marginVertical: 12,
   },
   toggleRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 12,
   },
   toggleTextGroup: {
     flex: 1,
   },
   toggleLabel: {
-    fontFamily: "Inter",
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#4A3D5C",
-    marginBottom: 3,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#E2E8F0',
+    marginBottom: 2,
   },
   toggleDescription: {
-    fontFamily: "Inter",
-    fontSize: 12,
-    fontWeight: "400",
-    color: "#A89BB5",
-    lineHeight: 18,
+    fontSize: 11,
+    color: '#64748B',
+    lineHeight: 16,
   },
   privacyCard: {
-    backgroundColor: "#EDE8F8",
-    borderRadius: 16,
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    borderRadius: 20,
     padding: 16,
-    gap: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.25)',
+    gap: 8,
   },
-  privacyHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  shieldCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#D8CEF0",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  shieldIcon: {
-    fontSize: 16,
+  shieldRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   privacyTitle: {
-    fontFamily: "Inter",
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#4A3D5C",
-    flex: 1,
-    flexWrap: "wrap",
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#34D399',
   },
   privacyText: {
-    fontFamily: "Inter",
-    fontSize: 13,
-    fontWeight: "400",
-    color: "#6B5F7A",
-    lineHeight: 20,
-  },
-  footerLink: {
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  footerLinkText: {
-    fontFamily: "Inter",
-    fontSize: 14,
-    fontWeight: "400",
-    color: "#7C5CBF",
-    textDecorationLine: "underline",
+    fontSize: 12,
+    color: '#94A3B8',
+    lineHeight: 18,
   },
 });

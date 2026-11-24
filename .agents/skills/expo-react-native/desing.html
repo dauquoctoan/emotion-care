@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Care — Master Product Design Prototype</title>
+    <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,400;1,600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        :root {
+            --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .font-serif-quote {
+            font-family: var(--font-serif);
+        }
+
+        .font-mono-code {
+            font-family: var(--font-mono);
+        }
+
+        /* iOS Liquid Glass Effect */
+        .liquid-glass-dark {
+            background: rgba(22, 24, 34, 0.78);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .liquid-glass-light {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
+        }
+
+        /* Subtle Paper Grain Texture */
+        .paper-texture {
+            background-image: radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-[#08090C] text-slate-100 min-h-screen flex flex-col items-center justify-start p-3 md:p-6 antialiased selection:bg-purple-500 selection:text-white"
+    id="main-body">
+
+    <!-- Master Top Navigation Bar (Studio Controls) -->
+    <header
+        class="w-full max-w-5xl mb-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-3xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl shadow-xl">
+        <div class="flex items-center space-x-3">
+            <div
+                class="w-9 h-9 rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-purple-500/25">
+                EC
+            </div>
+            <div>
+                <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-2">
+                    <span>Emotion Care</span>
+                    <span
+                        class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">iOS
+                        18 Native</span>
+                </h1>
+                <p class="text-[11px] text-slate-400">Master Product Art Direction & Interactive Prototype</p>
+            </div>
+        </div>
+
+        <!-- Controls: Concepts + Theme Toggle -->
+        <div class="flex flex-wrap items-center gap-2">
+            <!-- 3 Concepts Switcher -->
+            <div class="bg-black/40 border border-slate-800 p-1 rounded-full flex items-center text-xs">
+                <button onclick="setConcept('A')" id="btn-concept-A"
+                    class="px-3 py-1.5 rounded-full text-slate-400 font-medium transition hover:text-white">
+                    A: Social
+                </button>
+                <button onclick="setConcept('B')" id="btn-concept-B"
+                    class="px-3 py-1.5 rounded-full text-slate-400 font-medium transition hover:text-white">
+                    B: Editorial
+                </button>
+                <button onclick="setConcept('C')" id="btn-concept-C"
+                    class="px-3 py-1.5 rounded-full bg-purple-600 text-white font-semibold transition shadow-sm">
+                    C: Hybrid Master ⭐
+                </button>
+            </div>
+
+            <!-- Theme Switcher -->
+            <button onclick="toggleTheme()" id="btn-theme"
+                class="px-3.5 py-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition">
+                <span id="theme-icon">🌙</span>
+                <span id="theme-text">Dark Obsidian</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Interactive Device Viewport (iPhone 16 Pro 393 x 852 pt Aspect) -->
+    <main
+        class="relative w-full max-w-[400px] h-[852px] bg-[#0E1017] rounded-[52px] border-[8px] border-slate-800 shadow-[0_25px_70px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col transition-all duration-300"
+        id="device-frame">
+
+        <!-- Ambient Aurora Glow Behind Screen -->
+        <div class="absolute -top-32 -left-20 w-80 h-80 bg-purple-600/15 rounded-full blur-[90px] pointer-events-none"
+            id="aurora-glow-1"></div>
+        <div class="absolute top-1/3 -right-20 w-72 h-72 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none"
+            id="aurora-glow-2"></div>
+
+        <!-- Dynamic Island & iOS Status Bar -->
+        <div class="w-full pt-3 px-8 flex items-center justify-between select-none z-40 relative">
+            <span class="text-[13px] font-semibold text-slate-300" id="status-time">09:41</span>
+
+            <!-- Interactive Dynamic Island Pill -->
+            <div class="h-6 px-3 bg-black rounded-full flex items-center justify-center space-x-1.5 shadow-md border border-white/5 cursor-pointer hover:scale-105 transition"
+                onclick="showToast('⚡ Dynamic Island: Bảo vệ danh tính ẩn danh bằng x-device-id')">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-[10px] font-medium text-slate-300 tracking-tight">Ẩn danh an toàn</span>
+            </div>
+
+            <div class="flex items-center space-x-1.5 text-slate-300">
+                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                    <path
+                        d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.28 19.68 10.59 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9z" />
+                </svg>
+                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path
+                        d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z" />
+                </svg>
+            </div>
+        </div>
+
+        <!-- App Top Bar (Refined Editorial Header) -->
+        <div class="px-6 pt-3 pb-2 flex items-center justify-between z-30" id="app-nav">
+            <div>
+                <p class="text-[11px] font-semibold uppercase tracking-widest text-purple-400" id="nav-eyebrow">Khám phá
+                    hôm nay</p>
+                <h2 class="text-2xl font-bold tracking-tight text-white flex items-center gap-1.5" id="nav-title">
+                    <span>Words Matter</span>
+                    <span class="text-amber-400 text-lg">✦</span>
+                </h2>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="openSearchModal()"
+                    class="w-9 h-9 rounded-full bg-slate-800/80 hover:bg-slate-700/80 border border-white/10 flex items-center justify-center text-slate-300 transition"
+                    title="Tìm kiếm câu từ">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </button>
+                <button onclick="showToast('🔔 Bạn có 3 tương tác thấu cảm mới')"
+                    class="w-9 h-9 rounded-full bg-slate-800/80 hover:bg-slate-700/80 border border-white/10 flex items-center justify-center text-slate-300 transition relative"
+                    title="Thông báo">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-purple-500 rounded-full animate-ping"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Scrollable Screen Content Canvas -->
+        <div class="flex-1 overflow-y-auto px-5 py-2 space-y-5 no-scrollbar relative z-20 pb-28" id="screen-viewport">
+
+            <!-- ================= CONCEPT C: CREATIVE HYBRID (DEFAULT) ================= -->
+            <div id="concept-view-C" class="space-y-5">
+
+                <!-- Hero Editorial Quote of the Day (Bìa Tạp Chí Tương Tác) -->
+                <section
+                    class="relative rounded-3xl p-6 bg-gradient-to-br from-purple-900/30 via-slate-900/70 to-slate-900/90 border border-purple-500/20 shadow-xl overflow-hidden group">
+                    <div class="flex items-center justify-between mb-4">
+                        <span
+                            class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono">
+                            QUOTE OF THE DAY
+                        </span>
+                        <span class="text-xs text-slate-400 font-medium">Bởi @an_nhien</span>
+                    </div>
+
+                    <blockquote class="text-xl md:text-2xl font-serif-quote italic text-slate-100 leading-snug my-2">
+                        "Đôi khi điều đẹp nhất không phải là gặp được ai đó, mà là tìm lại chính mình sau chuỗi ngày lạc
+                        lõng."
+                    </blockquote>
+
+                    <div class="flex items-center justify-between mt-5 pt-3 border-t border-white/10">
+                        <div class="flex items-center space-x-2 text-xs text-slate-400">
+                            <span class="flex items-center gap-1 text-amber-300 font-bold">
+                                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
+                                    <path
+                                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                                <span>Score 1.8k</span>
+                            </span>
+                            <span>• 3.4k copy</span>
+                        </div>
+
+                        <!-- 1-Tap Copy Action -->
+                        <button
+                            onclick="handleCopy(this, 'Đôi khi điều đẹp nhất không phải là gặp được ai đó, mà là tìm lại chính mình sau chuỗi ngày lạc lõng. #EmotionCare')"
+                            class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-purple-600/30 active:scale-95 transition-all">
+                            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
+                                <path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" />
+                                <path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h8a2 2 0 00-2-2H5z" />
+                            </svg>
+                            <span class="btn-text">1-Tap Copy</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Curated Editorial Collections (Băng chuyền Tuyển tập nghệ thuật) -->
+                <section class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3
+                            class="text-sm font-bold tracking-tight text-white uppercase tracking-wider text-xs text-slate-400">
+                            Tuyển Tập Biên Tập</h3>
+                        <span class="text-xs text-purple-400 font-semibold cursor-pointer hover:underline"
+                            onclick="showToast('Mở toàn bộ danh mục tuyển tập...')">Xem tất cả ➔</span>
+                    </div>
+
+                    <div class="flex items-center space-x-3 overflow-x-auto no-scrollbar pb-1">
+                        <!-- Collection Item 1 -->
+                        <div onclick="openCollection('Những câu chữ dành cho ngày mưa', '128 captions')"
+                            class="min-w-[170px] h-[190px] rounded-2xl p-4 bg-gradient-to-b from-blue-950/60 to-slate-900 border border-blue-500/20 flex flex-col justify-between shrink-0 cursor-pointer hover:border-blue-500/50 transition-all group">
+                            <div class="flex justify-between items-start">
+                                <span class="text-2xl">🌧️</span>
+                                <span
+                                    class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300">128
+                                    câu</span>
+                            </div>
+                            <div>
+                                <p class="text-xs font-serif-quote italic text-blue-200">Cho ngày mưa</p>
+                                <h4
+                                    class="text-sm font-bold text-white leading-tight mt-1 group-hover:text-blue-300 transition">
+                                    Những câu chữ dành cho ngày mưa</h4>
+                            </div>
+                        </div>
+
+                        <!-- Collection Item 2 -->
+                        <div onclick="openCollection('Bình yên thôi cũng đủ', '94 captions')"
+                            class="min-w-[170px] h-[190px] rounded-2xl p-4 bg-gradient-to-b from-amber-950/50 to-slate-900 border border-amber-500/20 flex flex-col justify-between shrink-0 cursor-pointer hover:border-amber-500/50 transition-all group">
+                            <div class="flex justify-between items-start">
+                                <span class="text-2xl">☕</span>
+                                <span
+                                    class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">94
+                                    câu</span>
+                            </div>
+                            <div>
+                                <p class="text-xs font-serif-quote italic text-amber-200">Trạm dừng chân</p>
+                                <h4
+                                    class="text-sm font-bold text-white leading-tight mt-1 group-hover:text-amber-300 transition">
+                                    Bình yên thôi cũng đã đủ</h4>
+                            </div>
+                        </div>
+
+                        <!-- Collection Item 3 -->
+                        <div onclick="openCollection('Tuổi trẻ và những ngã rẽ', '210 captions')"
+                            class="min-w-[170px] h-[190px] rounded-2xl p-4 bg-gradient-to-b from-rose-950/50 to-slate-900 border border-rose-500/20 flex flex-col justify-between shrink-0 cursor-pointer hover:border-rose-500/50 transition-all group">
+                            <div class="flex justify-between items-start">
+                                <span class="text-2xl">🚀</span>
+                                <span
+                                    class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300">210
+                                    câu</span>
+                            </div>
+                            <div>
+                                <p class="text-xs font-serif-quote italic text-rose-200">Khát vọng</p>
+                                <h4
+                                    class="text-sm font-bold text-white leading-tight mt-1 group-hover:text-rose-300 transition">
+                                    Tuổi trẻ và những ngã rẽ</h4>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Trending Caption Stream (Rhythmic Card Feed) -->
+                <section class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Trending Now • Bảng Xếp
+                            Hạng</h3>
+                        <span class="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Live Gravity Score
+                        </span>
+                    </div>
+
+                    <!-- Card 1: Minimalist Typography Card -->
+                    <article
+                        class="p-5 rounded-2xl bg-slate-900/70 border border-white/5 hover:border-purple-500/30 transition-all shadow-sm">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                                <span class="text-xs font-bold text-slate-300">@tiem_ca_phe_mua</span>
+                                <span class="text-[10px] text-slate-500">• 2h trước</span>
+                            </div>
+                            <span
+                                class="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/20">
+                                #2 Trending 🔥
+                            </span>
+                        </div>
+
+                        <p class="text-base text-slate-100 font-normal leading-relaxed my-2">
+                            "Tuổi trẻ không cần phải luôn rực rỡ, chỉ cần đủ can đảm để sống theo cách mình muốn và
+                            không hối tiếc vì những điều chưa dám làm."
+                        </p>
+
+                        <div class="flex items-center justify-between pt-3 border-t border-white/5 mt-3">
+                            <div class="flex items-center space-x-3 text-xs text-slate-400">
+                                <button onclick="toggleLike(this)"
+                                    class="flex items-center gap-1 hover:text-purple-300 transition">
+                                    <span>🫂</span>
+                                    <span class="like-count">512</span>
+                                </button>
+                                <span class="flex items-center gap-1 text-slate-400">
+                                    <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor"
+                                        stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                    <span class="copy-count">924</span>
+                                </span>
+                            </div>
+
+                            <button
+                                onclick="handleCopy(this, 'Tuổi trẻ không cần phải luôn rực rỡ, chỉ cần đủ can đảm để sống theo cách mình muốn và không hối tiếc vì những điều chưa dám làm. #EmotionCare')"
+                                class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-purple-600 text-white font-semibold text-xs flex items-center gap-1 border border-white/10 transition active:scale-95">
+                                <span>Copy</span>
+                            </button>
+                        </div>
+                    </article>
+
+                    <!-- Card 2: Editorial Serif Accent Card -->
+                    <article
+                        class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-indigo-950/40 border border-indigo-500/20 hover:border-indigo-500/40 transition-all">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-semibold text-indigo-300">Gợi Ý Triết Lý</span>
+                            <button
+                                onclick="openStudioWithText('Có những ngày lặng lẽ đến mức tiếng mưa rơi ngoài hiên cũng hóa thành lời an ủi.')"
+                                class="text-[11px] text-purple-400 font-semibold hover:underline flex items-center gap-1">
+                                <span>Edit trong Studio</span>
+                                <span>✎</span>
+                            </button>
+                        </div>
+
+                        <blockquote
+                            class="text-base font-serif-quote italic text-slate-100 leading-relaxed my-2 pl-3 border-l-2 border-indigo-400">
+                            "Có những ngày lặng lẽ đến mức tiếng mưa rơi ngoài hiên cũng hóa thành lời an ủi dịu dàng
+                            nhất."
+                        </blockquote>
+
+                        <div class="flex items-center justify-between pt-3 border-t border-white/5 mt-3">
+                            <span class="text-[11px] text-slate-400">Mưa • Bình yên</span>
+                            <button
+                                onclick="handleCopy(this, 'Có những ngày lặng lẽ đến mức tiếng mưa rơi ngoài hiên cũng hóa thành lời an ủi dịu dàng nhất. #EmotionCare')"
+                                class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-1 transition shadow-sm active:scale-95">
+                                <span>1-Tap Copy</span>
+                            </button>
+                        </div>
+                    </article>
+
+                </section>
+
+            </div>
+
+            <!-- ================= CONCEPT A: MODERN SOCIAL (Fast & Algorithmic) ================= -->
+            <div id="concept-view-A" class="space-y-4 hidden">
+                <div class="p-3 bg-purple-950/30 rounded-2xl border border-purple-500/20 text-xs text-purple-300">
+                    ⚡ <strong>Concept A (Modern Social):</strong> Mật độ cao, dòng feed lướt nhanh như Threads/TikTok,
+                    tối ưu hóa các nút tương tác 1 chạm.
+                </div>
+                <!-- Snackable cards loop -->
+                <div class="p-4 rounded-xl bg-slate-900 border border-white/5 space-y-2">
+                    <div class="flex justify-between text-xs text-slate-400">
+                        <span class="font-bold text-slate-200">@genz_writer</span>
+                        <span>12m</span>
+                    </div>
+                    <p class="text-sm text-slate-200">"Không phải ngày nào cũng cần đặc biệt. Bình yên thôi cũng đã là
+                        món quà rồi."</p>
+                    <div class="flex justify-between items-center pt-2 text-xs text-slate-400">
+                        <span>🔥 450 copy • 120 reaction</span>
+                        <button
+                            onclick="handleCopy(this, 'Không phải ngày nào cũng cần đặc biệt. Bình yên thôi cũng đã là món quà rồi.')"
+                            class="px-3 py-1 bg-purple-600 text-white rounded-lg text-xs font-semibold">Copy</button>
+                    </div>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-900 border border-white/5 space-y-2">
+                    <div class="flex justify-between text-xs text-slate-400">
+                        <span class="font-bold text-slate-200">@saigon_night</span>
+                        <span>34m</span>
+                    </div>
+                    <p class="text-sm text-slate-200">"Sài Gòn hoa lệ, hoa cho người giàu và lệ cho người đau đáu về
+                        tương lai."</p>
+                    <div class="flex justify-between items-center pt-2 text-xs text-slate-400">
+                        <span>🔥 890 copy • 310 reaction</span>
+                        <button
+                            onclick="handleCopy(this, 'Sài Gòn hoa lệ, hoa cho người giàu và lệ cho người đau đáu về tương lai.')"
+                            class="px-3 py-1 bg-purple-600 text-white rounded-lg text-xs font-semibold">Copy</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= CONCEPT B: EDITORIAL PREMIUM (High Whitespace) ================= -->
+            <div id="concept-view-B" class="space-y-6 hidden">
+                <div class="p-3 bg-amber-950/30 rounded-2xl border border-amber-500/20 text-xs text-amber-300">
+                    🏛️ <strong>Concept B (Editorial Premium):</strong> Bố cục tạp chí nghệ thuật Kinfolk, chữ lớn,
+                    khoảng thở rộng rãi, trích dẫn văn học sâu sắc.
+                </div>
+                <article class="p-8 rounded-3xl bg-[#14151C] border border-white/10 space-y-4">
+                    <p class="text-[11px] uppercase tracking-widest text-amber-400 font-mono">TẬP SAN THÁNG 11</p>
+                    <h2 class="text-2xl font-serif-quote italic text-slate-100 leading-relaxed">
+                        "Có những điều không cần nói ra, chỉ cần một người đủ tinh tế để hiểu và ở lại."
+                    </h2>
+                    <div class="pt-4 border-t border-white/10 flex justify-between items-center text-xs text-slate-400">
+                        <span>Tiểu luận • Tác giả vô danh</span>
+                        <button
+                            onclick="handleCopy(this, 'Có những điều không cần nói ra, chỉ cần một người đủ tinh tế để hiểu và ở lại.')"
+                            class="underline text-amber-300 font-semibold">Sao chép trích dẫn</button>
+                    </div>
+                </article>
+            </div>
+
+        </div>
+
+        <!-- Floating Liquid Glass Bottom Navigation Bar (iOS 18 Native Spec) -->
+        <nav class="absolute bottom-5 left-5 right-5 h-[68px] rounded-[32px] liquid-glass-dark px-6 flex items-center justify-between z-40 select-none transition-all duration-300"
+            id="bottom-bar">
+            <!-- Tab 1: Discover -->
+            <button onclick="switchTab('discover')" class="flex flex-col items-center gap-1 text-purple-400 group">
+                <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
+                    <path
+                        d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                </svg>
+                <span class="text-[10px] font-semibold tracking-tight">Khám Phá</span>
+            </button>
+
+            <!-- Tab 2: Topics & Curated -->
+            <button onclick="switchTab('topics')"
+                class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
+                <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
+                    <path
+                        d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+                </svg>
+                <span class="text-[10px] font-medium tracking-tight">Chủ Đề</span>
+            </button>
+
+            <!-- Center Creator Studio CTA (Glow Capsule) -->
+            <button onclick="openCreatorStudio()"
+                class="w-12 h-12 rounded-full bg-gradient-to-tr from-purple-600 via-indigo-600 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-purple-600/40 border border-white/30 hover:scale-105 active:scale-95 transition-all -translate-y-1"
+                title="Mở Xưởng Sáng Tạo">
+                <svg class="w-6 h-6 stroke-current fill-none stroke-[2.5]" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+            </button>
+
+            <!-- Tab 4: Safe Space Nearby -->
+            <button onclick="switchTab('nearby')"
+                class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
+                <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd"
+                        d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                        clip-rule="evenodd" />
+                </svg>
+                <span class="text-[10px] font-medium tracking-tight">Lân Cận</span>
+            </button>
+
+            <!-- Tab 5: Library & Saved -->
+            <button onclick="switchTab('library')"
+                class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
+                <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
+                    <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+                </svg>
+                <span class="text-[10px] font-medium tracking-tight">Thư Viện</span>
+            </button>
+        </nav>
+
+        <!-- Interactive Bottom Sheet: CREATOR STUDIO (Stage 5 Requirement) -->
+        <div id="creator-sheet"
+            class="absolute inset-0 bg-slate-950/95 backdrop-blur-2xl z-50 transform translate-y-full transition-transform duration-500 ease-out flex flex-col p-6 rounded-[48px]">
+
+            <!-- Sheet Grabber & Header -->
+            <div class="flex items-center justify-between pb-3 border-b border-white/10">
+                <button onclick="closeCreatorStudio()"
+                    class="text-xs font-semibold text-slate-400 hover:text-white">Đóng</button>
+                <span class="text-xs font-bold uppercase tracking-widest text-purple-400">Creator Studio</span>
+                <button onclick="saveAndPublish()"
+                    class="px-3.5 py-1.5 rounded-full bg-purple-600 text-white font-bold text-xs shadow-md shadow-purple-600/30">Xuất
+                    Bản</button>
+            </div>
+
+            <!-- Writing Surface Canvas -->
+            <div class="flex-1 py-4 flex flex-col justify-center">
+                <textarea id="studio-text" rows="4"
+                    class="w-full bg-transparent text-xl font-serif-quote italic text-slate-100 placeholder-slate-600 focus:outline-none resize-none leading-relaxed text-center"
+                    placeholder="Gõ câu từ tâm huyết của bạn tại đây..."></textarea>
+
+                <p class="text-center text-xs text-slate-500 mt-2" id="studio-author">— @bút_danh_của_bạn</p>
+            </div>
+
+            <!-- Contextual Customization Controls -->
+            <div class="space-y-4 pt-3 border-t border-white/10">
+                <!-- Font Selection -->
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-400">Kiểu chữ:</span>
+                    <div class="flex space-x-1.5 bg-slate-900 p-1 rounded-xl border border-white/5">
+                        <button onclick="changeStudioFont('serif')"
+                            class="px-2.5 py-1 rounded-lg bg-purple-600 text-white font-serif-quote text-xs">Serif</button>
+                        <button onclick="changeStudioFont('sans')"
+                            class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white text-xs">Sans</button>
+                        <button onclick="changeStudioFont('mono')"
+                            class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-mono text-xs">Mono</button>
+                    </div>
+                </div>
+
+                <!-- Background Presets -->
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-400">Bầu không khí:</span>
+                    <div class="flex space-x-2">
+                        <button onclick="changeStudioBg('obsidian')"
+                            class="w-6 h-6 rounded-full bg-slate-900 border-2 border-purple-500"></button>
+                        <button onclick="changeStudioBg('sunset')"
+                            class="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-600 to-rose-600 border border-white/20"></button>
+                        <button onclick="changeStudioBg('aurora')"
+                            class="w-6 h-6 rounded-full bg-gradient-to-tr from-purple-800 to-indigo-900 border border-white/20"></button>
+                        <button onclick="changeStudioBg('paper')"
+                            class="w-6 h-6 rounded-full bg-stone-100 border border-black/20"></button>
+                    </div>
+                </div>
+
+                <!-- AI Inspire Prompt Trigger -->
+                <button onclick="aiInspire()"
+                    class="w-full py-2.5 rounded-2xl bg-indigo-950/60 border border-indigo-500/30 text-indigo-300 font-semibold text-xs flex items-center justify-center gap-2 hover:bg-indigo-900/40 transition">
+                    <span>✨</span>
+                    <span>Để AI gieo vần cảm xúc...</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Toast Notification Overlay -->
+        <div id="toast"
+            class="absolute top-12 left-1/2 -translate-x-1/2 bg-slate-900/95 border border-purple-500/40 text-purple-300 text-xs font-semibold px-4 py-2 rounded-full shadow-2xl backdrop-blur-xl flex items-center space-x-2 pointer-events-none opacity-0 translate-y-[-10px] transition-all duration-300 z-50">
+            <span id="toast-icon">✨</span>
+            <span id="toast-msg">Đã copy caption kèm hashtag #EmotionCare!</span>
+        </div>
+
+    </main>
+
+    <!-- Product Architecture Breakdown Notes -->
+    <footer class="w-full max-w-4xl mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-400">
+        <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800">
+            <span class="text-purple-400 font-bold block mb-1">1. Modern Social Fast Flow</span>
+            <p>Thao tác 1-Tap Copy kèm phản hồi haptic, bộ đếm tương tác tức thì và phân loại theo thuật toán Gravity
+                Decay.</p>
+        </div>
+        <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800">
+            <span class="text-amber-400 font-bold block mb-1">2. Editorial Craftsmanship</span>
+            <p>Playfair Serif trích dẫn nghệ thuật, khoảng thở nhịp điệu, tuyển tập giám tuyển thủ công thay vì emoji vô
+                hồn.</p>
+        </div>
+        <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800">
+            <span class="text-emerald-400 font-bold block mb-1">3. Native iOS Liquid Glass</span>
+            <p>Thanh điều hướng nổi lơ lửng, vật liệu khúc xạ ánh sáng Specular Rim Highlight đạt chuẩn giao diện iOS
+                18.</p>
+        </div>
+    </footer>
+
+    <script>
+        let isDarkMode = true;
+        let activeConcept = 'C';
+
+        function setConcept(c) {
+            activeConcept = c;
+            ['A', 'B', 'C'].forEach(id => {
+                const view = document.getElementById(`concept-view-${id}`);
+                const btn = document.getElementById(`btn-concept-${id}`);
+                if (id === c) {
+                    view.classList.remove('hidden');
+                    btn.className = "px-3 py-1.5 rounded-full bg-purple-600 text-white font-semibold transition shadow-sm";
+                } else {
+                    view.classList.add('hidden');
+                    btn.className = "px-3 py-1.5 rounded-full text-slate-400 font-medium transition hover:text-white";
+                }
+            });
+            showToast(`Chuyển sang ${c === 'A' ? 'Concept A (Modern Social)' : c === 'B' ? 'Concept B (Editorial)' : 'Concept C (Creative Hybrid Master)'}`);
+        }
+
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            const body = document.getElementById('main-body');
+            const frame = document.getElementById('device-frame');
+            const bottomBar = document.getElementById('bottom-bar');
+            const themeText = document.getElementById('theme-text');
+            const themeIcon = document.getElementById('theme-icon');
+
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark');
+                body.className = "bg-[#08090C] text-slate-100 min-h-screen flex flex-col items-center justify-start p-3 md:p-6 antialiased";
+                frame.className = "relative w-full max-w-[400px] h-[852px] bg-[#0E1017] rounded-[52px] border-[8px] border-slate-800 shadow-[0_25px_70px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col transition-all duration-300";
+                bottomBar.className = "absolute bottom-5 left-5 right-5 h-[68px] rounded-[32px] liquid-glass-dark px-6 flex items-center justify-between z-40 select-none transition-all duration-300";
+                themeText.textContent = "Dark Obsidian";
+                themeIcon.textContent = "🌙";
+            } else {
+                document.documentElement.classList.remove('dark');
+                body.className = "bg-[#F4F4F6] text-slate-900 min-h-screen flex flex-col items-center justify-start p-3 md:p-6 antialiased";
+                frame.className = "relative w-full max-w-[400px] h-[852px] bg-[#FAFAF9] rounded-[52px] border-[8px] border-slate-300 shadow-[0_25px_70px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col transition-all duration-300 paper-texture";
+                bottomBar.className = "absolute bottom-5 left-5 right-5 h-[68px] rounded-[32px] liquid-glass-light px-6 flex items-center justify-between z-40 select-none transition-all duration-300";
+                themeText.textContent = "Light Daylight";
+                themeIcon.textContent = "☀️";
+            }
+            showToast(isDarkMode ? "Đã bật chế độ Tối (Dark Obsidian)" : "Đã bật chế độ Sáng (Editorial Daylight)");
+        }
+
+        function handleCopy(btn, text) {
+            navigator.clipboard.writeText(text).catch(() => { });
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<span>✓ Đã chép</span>';
+            btn.classList.add('bg-emerald-600', 'scale-95');
+            showToast("Đã lưu caption vào bộ nhớ tạm kèm #EmotionCare! ✨");
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('bg-emerald-600', 'scale-95');
+            }, 1800);
+        }
+
+        function toggleLike(btn) {
+            const countEl = btn.querySelector('.like-count');
+            let count = parseInt(countEl.textContent, 10);
+            const isLiked = btn.classList.contains('text-purple-400');
+            if (isLiked) {
+                btn.classList.remove('text-purple-400');
+                countEl.textContent = count - 1;
+            } else {
+                btn.classList.add('text-purple-400');
+                countEl.textContent = count + 1;
+                showToast("Đã gửi đồng cảm ấm áp 🫂");
+            }
+        }
+
+        function openCreatorStudio() {
+            const sheet = document.getElementById('creator-sheet');
+            sheet.classList.remove('translate-y-full');
+            sheet.classList.add('translate-y-0');
+        }
+
+        function closeCreatorStudio() {
+            const sheet = document.getElementById('creator-sheet');
+            sheet.classList.remove('translate-y-0');
+            sheet.classList.add('translate-y-full');
+        }
+
+        function openStudioWithText(quote) {
+            document.getElementById('studio-text').value = quote;
+            openCreatorStudio();
+        }
+
+        function changeStudioFont(font) {
+            const textarea = document.getElementById('studio-text');
+            if (font === 'serif') {
+                textarea.className = "w-full bg-transparent text-xl font-serif-quote italic text-slate-100 placeholder-slate-600 focus:outline-none resize-none leading-relaxed text-center";
+            } else if (font === 'sans') {
+                textarea.className = "w-full bg-transparent text-xl font-sans font-bold text-slate-100 placeholder-slate-600 focus:outline-none resize-none leading-relaxed text-center";
+            } else {
+                textarea.className = "w-full bg-transparent text-lg font-mono-code text-slate-100 placeholder-slate-600 focus:outline-none resize-none leading-relaxed text-center";
+            }
+        }
+
+        function changeStudioBg(type) {
+            showToast(`Đã áp dụng bầu không khí: ${type}`);
+        }
+
+        function aiInspire() {
+            const quotes = [
+                "Có những ngày lặng lẽ đến mức chỉ cần một tách trà ấm cũng đủ làm dịu đi vạn sự bộn bề.",
+                "Tuổi trẻ không cần phải luôn rực rỡ, chỉ cần đủ dũng cảm để sống là chính mình.",
+                "Trời hôm nay nhiều mây, lòng mình thì nhiều tâm tư..."
+            ];
+            const picked = quotes[Math.floor(Math.random() * quotes.length)];
+            document.getElementById('studio-text').value = picked;
+            showToast("✨ AI đã gợi ý một câu từ theo tâm trạng!");
+        }
+
+        function saveAndPublish() {
+            closeCreatorStudio();
+            showToast("🚀 Caption đã được xuất bản và cập nhật vào Feed!");
+        }
+
+        function openCollection(title, count) {
+            showToast(`Mở bộ sưu tập: "${title}" (${count})`);
+        }
+
+        function openSearchModal() {
+            showToast("🔍 Mở thanh tìm kiếm thông minh k-NN...");
+        }
+
+        function switchTab(tab) {
+            showToast(`Chuyển đến màn hình: ${tab.toUpperCase()}`);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-msg');
+            msgEl.textContent = msg;
+            toast.classList.remove('opacity-0', 'translate-y-[-10px]');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-[-10px]');
+            }, 2400);
+        }
+    </script>
+</body>
+
+</html>

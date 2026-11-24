@@ -14,7 +14,11 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useEffect } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Appearance, View } from "react-native";
+import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context";
+
+// Lock app runtime and native bridge to Dark Mode
+Appearance.setColorScheme('dark');
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -45,39 +49,41 @@ export default function RootLayout() {
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: "#EDE8F8",
+          backgroundColor: "#08090C",
         }}
       >
-        <ActivityIndicator />
+        <ActivityIndicator color="#C084FC" size="large" />
       </View>
     );
   }
 
   return (
-    <NotificationProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen
-            name="(tabs)"
-            options={{ headerShown: false, headerTransparent: true }}
-          />
-          <Stack.Screen name="settings" options={{ headerShown: false }} />
-          <Stack.Screen name="detail" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="how-it-works"
-            options={{
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="welcome-screen"
-            options={{
-              headerShown: false,
-            }}
-          />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </NotificationProvider>
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+      <NotificationProvider>
+        <ThemeProvider value={DarkTheme}>
+          <Stack>
+            <Stack.Screen
+              name="(tabs)"
+              options={{ headerShown: false, headerTransparent: true }}
+            />
+            <Stack.Screen name="settings" options={{ headerShown: false }} />
+            <Stack.Screen name="detail" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="how-it-works"
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="welcome-screen"
+              options={{
+                headerShown: false,
+              }}
+            />
+          </Stack>
+          <StatusBar style="light" />
+        </ThemeProvider>
+      </NotificationProvider>
+    </SafeAreaProvider>
   );
 }

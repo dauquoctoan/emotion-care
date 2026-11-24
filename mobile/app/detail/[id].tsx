@@ -1,22 +1,27 @@
-import { reactToEmotionPost } from "@/services/api";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { router, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import Header from '@/components/header';
+import { copyPostCaption, reactToEmotionPost } from '@/services/api';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useState } from 'react';
 import {
-  SafeAreaView,
+  Animated,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-} from "react-native";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-type Reaction = "toiHieuBan" | "guiTinhYeu" | "hoTro" | null;
+type Reaction = 'hug' | 'listen' | 'withYou' | null;
 
-const REACTIONS: { key: Reaction; icon: string; label: string }[] = [
-  { key: "toiHieuBan", icon: "thumb-up", label: "Tôi hiểu bạn" },
-  { key: "guiTinhYeu", icon: "favorite", label: "Gửi tình yêu" },
-  { key: "hoTro", icon: "volunteer-activism", label: "Hỗ trợ" },
+const REACTIONS: { key: Reaction; icon: keyof typeof Ionicons.glyphMap; label: string; emoji: string }[] = [
+  { key: 'hug', icon: 'heart', label: 'Gửi cái ôm', emoji: '🤗' },
+  { key: 'listen', icon: 'ear-outline', label: 'Lắng nghe', emoji: '👂' },
+  { key: 'withYou', icon: 'sparkles', label: 'Ở đây cùng bạn', emoji: '🤍' },
 ];
 
 export default function ExploreDetailScreen() {
@@ -29,69 +34,104 @@ export default function ExploreDetailScreen() {
   }>();
 
   const [selectedReaction, setSelectedReaction] = useState<Reaction>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastOpacity = useState(new Animated.Value(0))[0];
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    Animated.sequence([
+      Animated.timing(toastOpacity, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1800),
+      Animated.timing(toastOpacity, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setToastMessage(null));
+  };
+
+  const handleCopy = async () => {
+    if (content) {
+      await Clipboard.setStringAsync(content);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showToast('✨ Đã sao chép caption vào bộ nhớ tạm!');
+      if (id) {
+        copyPostCaption(id);
+      }
+    }
+  };
 
   const handleReaction = async (reaction: Reaction) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const nextReaction = selectedReaction === reaction ? null : reaction;
     setSelectedReaction(nextReaction);
+
     if (id) {
       const typeIdMap: Record<string, number> = {
-        toiHieuBan: 1,
-        guiTinhYeu: 2,
-        hoTro: 3,
+        hug: 1,
+        listen: 2,
+        withYou: 3,
       };
       const reactionTypeId = (reaction && typeIdMap[reaction]) || 1;
       try {
         await reactToEmotionPost(id, reactionTypeId);
       } catch (err) {
-        console.log("Failed to react to post:", err);
+        console.log('Failed to react:', err);
       }
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.headerBtn}
-          activeOpacity={0.7}
-        >
-          <MaterialIcons name="arrow-back-ios" size={18} color="#4A3D5C" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Chăm Sóc Cảm Xúc</Text>
-        <TouchableOpacity
-          onPress={() => router.push("/")}
-          style={styles.headerBtn}
-          activeOpacity={0.7}
-        >
-          <MaterialIcons name="home" size={22} color="#4A3D5C" />
-        </TouchableOpacity>
-      </View>
+      <Header title="CHI TIẾT CẢM XÚC" showBack={true} />
+
+      {/* Floating Micro-Toast */}
+      {toastMessage && (
+        <Animated.View style={[styles.toastContainer, { opacity: toastOpacity }]}>
+          <Text style={styles.toastEmoji}>✨</Text>
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </Animated.View>
+      )}
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Location & Time Indicator */}
         <View style={styles.locationPillWrap}>
           <View style={styles.locationPill}>
-            <Text style={styles.locationText}>
-              📍 {location ?? "Khu vực gần đây"}
-            </Text>
+            <Ionicons name="location-sharp" size={12} color="#C084FC" />
+            <Text style={styles.locationText}>{location ?? 'Khu vực gần đây'}</Text>
           </View>
-
-          <Text style={styles.timeText}> · {time ?? ""}</Text>
+          <Text style={styles.timeText}>• {time ?? 'Vừa xong'}</Text>
         </View>
 
+        {/* Emotion Emoji Avatar */}
         <View style={styles.emojiContainer}>
-          <Text style={styles.emoji}>{emoji ?? "😢"}</Text>
+          <View style={styles.emojiCircle}>
+            <Text style={styles.emoji}>{emoji ?? '🌿'}</Text>
+          </View>
         </View>
 
+        {/* Big Editorial Quote Card */}
         <View style={styles.card}>
-          <Text style={styles.contentText}>{content ?? ""}</Text>
+          <Text style={styles.quoteMark}>“</Text>
+          <Text style={styles.contentText}>{content ?? ''}</Text>
+
+          {/* Quick Copy Button */}
+          <TouchableOpacity style={styles.copyBtn} onPress={handleCopy} activeOpacity={0.7}>
+            <Ionicons name="copy-outline" size={14} color="#C084FC" />
+            <Text style={styles.copyBtnText}>Sao Chép Caption</Text>
+          </TouchableOpacity>
         </View>
 
+        {/* Empathy Prompt & Reactions */}
         <Text style={styles.reactionPrompt}>
-          Điều này khiến bạn cảm thấy thế nào?
+          Gửi gắm một chút ấm áp đến người bạn ẩn danh này:
         </Text>
 
         <View style={styles.reactionsRow}>
@@ -100,30 +140,26 @@ export default function ExploreDetailScreen() {
             return (
               <View key={r.key} style={styles.reactionItem}>
                 <TouchableOpacity
-                  style={[
-                    styles.reactionCircle,
-                    isActive && styles.reactionCircleActive,
-                  ]}
+                  style={[styles.reactionCircle, isActive && styles.reactionCircleActive]}
                   onPress={() => handleReaction(r.key)}
                   activeOpacity={0.8}
                 >
-                  <MaterialIcons
-                    name={r.icon as any}
-                    size={20}
-                    color={isActive ? "#7C5CBF" : "#9A8EA8"}
-                  />
+                  <Text style={styles.reactionEmoji}>{r.emoji}</Text>
                 </TouchableOpacity>
-                <Text
-                  style={[
-                    styles.reactionLabel,
-                    isActive && styles.reactionLabelActive,
-                  ]}
-                >
+                <Text style={[styles.reactionLabel, isActive && styles.reactionLabelActive]}>
                   {r.label}
                 </Text>
               </View>
             );
           })}
+        </View>
+
+        {/* Safe Space Privacy Guarantee */}
+        <View style={styles.privacyGuaranteeCard}>
+          <Ionicons name="shield-checkmark" size={16} color="#34D399" />
+          <Text style={styles.privacyGuaranteeText}>
+            Tâm sự này hoàn toàn ẩn danh và sẽ tự động biến mất theo chu kỳ riêng tư.
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -133,119 +169,198 @@ export default function ExploreDetailScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F6F3F7",
+    backgroundColor: '#08090C',
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+  toastContainer: {
+    position: 'absolute',
+    top: 50,
+    alignSelf: 'center',
+    zIndex: 999,
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(192, 132, 252, 0.4)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    shadowColor: '#C084FC',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    elevation: 10,
   },
-  headerBtn: {
-    width: 32,
-    height: 32,
-    alignItems: "center",
-    justifyContent: "center",
+  toastEmoji: {
+    fontSize: 14,
   },
-  headerTitle: {
-    fontFamily: "Inter",
-    fontSize: 18,
-    fontWeight: "400",
-    color: "#4A3D5C",
-    flex: 1,
-    textAlign: "center",
+  toastText: {
+    color: '#E2E8F0',
+    fontSize: 12,
+    fontWeight: '700',
   },
   scrollContent: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
+    paddingTop: 16,
     paddingBottom: 48,
-    alignItems: "flex-start",
+    alignItems: 'center',
   },
   locationPillWrap: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 20,
   },
   locationPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#EDE8F2",
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#0E1017',
     borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginBottom: 52,
-    alignSelf: "flex-start",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(192, 132, 252, 0.25)',
   },
   locationText: {
-    fontFamily: "Inter",
     fontSize: 12,
-    color: "#7C5CBF",
-    lineHeight: 15,
+    color: '#C084FC',
+    fontWeight: '600',
   },
   timeText: {
-    fontFamily: "Inter",
     fontSize: 12,
-    color: "#9A8EA8",
-    lineHeight: 15,
+    color: '#64748B',
   },
   emojiContainer: {
-    width: "100%",
-    alignItems: "center",
-    marginBottom: 28,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  emojiCircle: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: '#0E1017',
+    borderWidth: 1.5,
+    borderColor: 'rgba(192, 132, 252, 0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#C084FC',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    elevation: 6,
   },
   emoji: {
-    fontSize: 60,
+    fontSize: 38,
   },
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
+    backgroundColor: '#0E1017',
+    borderRadius: 24,
     paddingHorizontal: 24,
     paddingVertical: 28,
-    marginBottom: 48,
-    width: "100%",
+    marginBottom: 28,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    position: 'relative',
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 18,
+    elevation: 8,
+  },
+  quoteMark: {
+    position: 'absolute',
+    top: -8,
+    left: 18,
+    fontSize: 52,
+    color: 'rgba(192, 132, 252, 0.18)',
+    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
   },
   contentText: {
-    fontFamily: "Inter",
-    fontSize: 16,
-    fontWeight: "400",
-    color: "#4A3D5C",
-    lineHeight: 26,
-    textAlign: "center",
+    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontSize: 18,
+    lineHeight: 28,
+    color: '#F8FAFC',
+    textAlign: 'center',
+    marginBottom: 22,
+    fontStyle: 'italic',
+  },
+  copyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(192, 132, 252, 0.12)',
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(192, 132, 252, 0.3)',
+  },
+  copyBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#C084FC',
   },
   reactionPrompt: {
-    fontFamily: "Inter",
-    fontSize: 12,
-    color: "#9A8EA8",
-    textAlign: "center",
-    marginBottom: 20,
-    alignSelf: "center",
+    fontSize: 13,
+    color: '#94A3B8',
+    textAlign: 'center',
+    marginBottom: 16,
   },
   reactionsRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 40,
-    alignSelf: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 28,
+    marginBottom: 32,
   },
   reactionItem: {
-    alignItems: "center",
+    alignItems: 'center',
     gap: 8,
   },
   reactionCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#0E1017',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   reactionCircleActive: {
-    backgroundColor: "#EDE8F2",
+    backgroundColor: 'rgba(192, 132, 252, 0.2)',
+    borderColor: '#C084FC',
+    borderWidth: 1.5,
+  },
+  reactionEmoji: {
+    fontSize: 26,
   },
   reactionLabel: {
-    fontFamily: "Inter",
-    fontSize: 12,
-    color: "#9A8EA8",
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '500',
   },
   reactionLabelActive: {
-    color: "#7C5CBF",
+    color: '#C084FC',
+    fontWeight: '700',
+  },
+  privacyGuaranteeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.2)',
+  },
+  privacyGuaranteeText: {
+    flex: 1,
+    fontSize: 11,
+    color: '#94A3B8',
+    lineHeight: 16,
   },
 });

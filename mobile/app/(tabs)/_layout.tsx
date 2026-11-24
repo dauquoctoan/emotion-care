@@ -1,36 +1,83 @@
-import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
+import { NativeTabs } from "expo-router/native-tabs";
 import { Platform } from "react-native";
+
+const { Icon, Label } = NativeTabs.Trigger;
 
 const TABS = [
   {
     name: "index",
-    title: "Trang chủ",
-    icon: "house.fill",
-    src: require(`../../assets/images/house.png`),
+    title: "Khám Phá",
+    sf: "sparkles",
+    src: require("../../assets/images/house.png"),
   },
   {
     name: "explore",
-    title: "Khám phá",
-    icon: "list.bullet",
-    src: require(`../../assets/images/list_bullet.png`),
+    title: "Chủ Đề",
+    sf: "square.grid.2x2",
+    src: require("../../assets/images/list_bullet.png"),
   },
   {
     name: "write",
-    title: "Soạn",
-    icon: "pencil",
-    src: require(`../../assets/images/pencil.png`),
+    title: "Studio",
+    sf: "plus.circle.fill",
+    src: require("../../assets/images/pencil.png"),
+    prominent: true,
+  },
+  {
+    name: "nearby",
+    title: "Lân Cận",
+    sf: "location",
+    src: require("../../assets/images/house.png"),
+  },
+  {
+    name: "library",
+    title: "Thư Viện",
+    sf: "bookmark",
+    src: require("../../assets/images/list_bullet.png"),
   },
 ] as const;
 
 export default function TabLayout() {
   return (
-    <NativeTabs>
+    <NativeTabs
+      backgroundColor="#0E1017"
+      blurEffect="systemChromeMaterialDark"
+      disableTransparentOnScrollEdge={true}
+      shadowColor="#000000"
+      tintColor="#C084FC"
+      iconColor={{
+        default: "#64748B",
+        selected: "#C084FC",
+      }}
+      labelStyle={{
+        default: {
+          color: "#94A3B8",
+          fontSize: 10,
+          fontWeight: "600",
+        },
+        selected: {
+          color: "#C084FC",
+          fontSize: 10,
+          fontWeight: "700",
+        },
+      }}
+    >
       {TABS.map((tab) => (
-        <NativeTabs.Trigger key={tab.name} name={tab.name}>
+        <NativeTabs.Trigger
+          key={tab.name}
+          name={tab.name}
+          prominent={'prominent' in tab ? tab.prominent : undefined}
+        >
           {Platform.OS === "ios" ? (
-            <Icon selectedColor="#5A3E7B" sf={tab.icon} />
+            <Icon
+              selectedColor="#C084FC"
+              sf={tab.sf as any}
+            />
           ) : (
-            <Icon selectedColor="#5A3E7B" src={tab.src} />
+            <Icon
+              selectedColor="#C084FC"
+              src={tab.src}
+            />
           )}
           <Label>{tab.title}</Label>
         </NativeTabs.Trigger>
