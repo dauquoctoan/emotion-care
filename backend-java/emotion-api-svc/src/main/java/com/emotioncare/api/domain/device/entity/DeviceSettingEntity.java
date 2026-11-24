@@ -53,6 +53,13 @@ public class DeviceSettingEntity {
   @Column(name = "low_pressure_mode", nullable = false)
   private Boolean lowPressureMode = false;
 
+  @Builder.Default
+  @Column(name = "app_mode", nullable = false, length = 30)
+  private String appMode = "DUAL_MODE";
+
+  @Column(name = "author_alias", length = 100)
+  private String authorAlias;
+
   @UpdateTimestamp
   @Column(name = "updated_at", nullable = false)
   private Instant updatedAt;

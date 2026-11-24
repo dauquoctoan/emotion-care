@@ -6,14 +6,18 @@ export interface ApiResponse<T> {
 
 export interface ApiCreateEmotionPost {
   device_id: string;
-  emotion_category_id: number;
   content: string;
   is_ai_assisted: Boolean;
   latitude: number;
   longitude: number;
   city: string;
   district: string;
-  code: string;
+  code?: string;
+  emotion_code?: string;
+  emotion_category_id?: number;
+  author_alias?: string;
+  style_type?: string;
+  atmosphere?: string;
 }
 
 export interface Device {
@@ -42,6 +46,10 @@ export interface DeviceSetting {
   ai_suggestion_enabled: boolean;
 
   low_pressure_mode: boolean;
+
+  app_mode?: string;
+
+  author_alias?: string;
 
   updated_at: Date;
 }

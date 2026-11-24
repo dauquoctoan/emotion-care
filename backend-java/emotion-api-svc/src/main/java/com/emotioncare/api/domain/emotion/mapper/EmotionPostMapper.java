@@ -14,9 +14,15 @@ import org.mapstruct.ReportingPolicy;
 public interface EmotionPostMapper {
 
   @Mapping(target = "id", ignore = true)
+  @Mapping(target = "emotionCategoryId", ignore = true)
   @Mapping(target = "status", constant = "1")
   @Mapping(target = "isAiAssisted", expression = "java(Boolean.TRUE.equals(req.getIsAiAssisted()))")
   @Mapping(target = "visibilityRadiusM", expression = "java(req.getVisibilityRadiusM() != null ? req.getVisibilityRadiusM() : 5000)")
+  @Mapping(target = "authorAlias", source = "authorAlias")
+  @Mapping(target = "styleType", expression = "java(req.getStyleType() != null ? req.getStyleType() : \"serif\")")
+  @Mapping(target = "atmosphere", expression = "java(req.getAtmosphere() != null ? req.getAtmosphere() : \"obsidian\")")
+  @Mapping(target = "copyCount", constant = "0")
+  @Mapping(target = "viralScore", expression = "java(java.math.BigDecimal.ZERO)")
   EmotionPostEntity toEntity(CreatePostRequest req);
 
   @Mapping(target = "emotionCategoryName", source = "emotionCategory.name")
@@ -38,6 +44,11 @@ public interface EmotionPostMapper {
   @Mapping(target = "status", source = "post.status")
   @Mapping(target = "createdAt", source = "post.createdAt")
   @Mapping(target = "expiredAt", source = "post.expiredAt")
+  @Mapping(target = "authorAlias", source = "post.authorAlias")
+  @Mapping(target = "styleType", source = "post.styleType")
+  @Mapping(target = "atmosphere", source = "post.atmosphere")
+  @Mapping(target = "copyCount", source = "post.copyCount")
+  @Mapping(target = "viralScore", source = "post.viralScore")
   @Mapping(target = "tags", source = "tags")
   @Mapping(target = "reactionCounts", source = "reactionCounts")
   @Mapping(target = "userReactionId", source = "userReactionId")

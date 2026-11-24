@@ -99,6 +99,37 @@ public class EmotionPostController {
     return BaseResponse.of(postService.getPostById(id, currentDeviceId));
   }
 
+  @PostMapping("/{id}/save")
+  @Operation(summary = "Save / bookmark a caption to library")
+  public BaseResponse<Map<String, Object>> savePost(
+      @PathVariable UUID id,
+      @RequestHeader(value = "x-device-id", required = false) String headerDeviceId
+  ) {
+    String currentDeviceId = SecurityUtils.getCurrentDeviceIdString().orElse(headerDeviceId);
+    return BaseResponse.of(postService.savePost(id, currentDeviceId));
+  }
+
+  @DeleteMapping("/{id}/save")
+  @Operation(summary = "Remove a saved caption from library")
+  public BaseResponse<Map<String, Object>> unsavePost(
+      @PathVariable UUID id,
+      @RequestHeader(value = "x-device-id", required = false) String headerDeviceId
+  ) {
+    String currentDeviceId = SecurityUtils.getCurrentDeviceIdString().orElse(headerDeviceId);
+    return BaseResponse.of(postService.unsavePost(id, currentDeviceId));
+  }
+
+  @GetMapping("/saved")
+  @Operation(summary = "Get current device's saved bookmarks")
+  public BaseResponse<List<PostResponse>> getSavedPosts(
+      @RequestHeader(value = "x-device-id", required = false) String headerDeviceId,
+      @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+  ) {
+    String currentDeviceId = SecurityUtils.getCurrentDeviceIdString().orElse(headerDeviceId);
+    Page<PostResponse> page = postService.getSavedPosts(currentDeviceId, pageable);
+    return BaseResponse.ofPage(page);
+  }
+
   @DeleteMapping("/{id}")
   @Operation(summary = "Delete an emotion post (only owner device allowed)")
   public BaseResponse<Void> deletePost(

@@ -46,6 +46,25 @@ public class EmotionPostEntity {
   @Column(name = "content", nullable = false, columnDefinition = "text")
   private String content;
 
+  @Column(name = "author_alias", length = 100)
+  private String authorAlias;
+
+  @Builder.Default
+  @Column(name = "style_type", nullable = false, length = 50)
+  private String styleType = "serif";
+
+  @Builder.Default
+  @Column(name = "atmosphere", nullable = false, length = 50)
+  private String atmosphere = "obsidian";
+
+  @Builder.Default
+  @Column(name = "copy_count", nullable = false)
+  private Integer copyCount = 0;
+
+  @Builder.Default
+  @Column(name = "viral_score", precision = 10, scale = 2, nullable = false)
+  private BigDecimal viralScore = BigDecimal.ZERO;
+
   @Builder.Default
   @Column(name = "is_ai_assisted", nullable = false)
   private Boolean isAiAssisted = false;

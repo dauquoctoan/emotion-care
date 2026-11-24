@@ -35,6 +35,21 @@ public class PostResponse {
 
   private String content;
 
+  @JsonProperty("author_alias")
+  private String authorAlias;
+
+  @JsonProperty("style_type")
+  private String styleType;
+
+  @JsonProperty("atmosphere")
+  private String atmosphere;
+
+  @JsonProperty("copy_count")
+  private Integer copyCount;
+
+  @JsonProperty("viral_score")
+  private BigDecimal viralScore;
+
   @JsonProperty("is_ai_assisted")
   private Boolean isAiAssisted;
 

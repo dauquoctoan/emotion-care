@@ -1,9 +1,9 @@
 # EMOTION CARE PLATFORM
 ## FINAL ARCHITECTURE SPECIFICATION (Bản Hợp Nhất Cuối Cùng)
 
-> **Phiên bản:** 4.0.0 (Final Unified Architecture)  
+> **Phiên bản:** 4.2.0 (Final Unified Architecture)  
 > **Trạng thái:** ✅ Single Source of Truth — Thay thế toàn bộ các tài liệu tiền nhiệm  
-> **Ngày ban hành:** 2026-11-22  
+> **Ngày ban hành:** 2026-11-24  
 > **Phạm vi:** Tầm nhìn sản phẩm, Kiến trúc phân tán, Database Schema, Thuật toán, AI/RAG (API-based), DevOps
 
 ### Lịch Sử Phiên Bản (Changelog & Version History)
@@ -12,6 +12,8 @@
 
 | Phiên bản | Ngày cập nhật | Tác giả / Người duyệt | Tóm tắt các thay đổi chính | Bản lưu trữ |
 | :---: | :---: | :---: | :--- | :---: |
+| **`v4.2.0`** | 2026-11-24 | Solution Architect | • Chuẩn hóa Dual-Resolution Key/ID cho danh mục cảm xúc (Emotion Category & Mood Mapping): Ưu tiên tra cứu theo semantic key `code` (`happy`, `sad`, ...) kết hợp fallback theo `emotion_category_id`.<br>• Cập nhật DTO `CreatePostRequest` và `EmotionPostService` hỗ trợ cả `code`, `emotion_code` và `emotion_category_id`, giúp Mobile chủ động offline caching và tránh lệch ID giữa các môi trường.<br>• Đồng bộ kiểu dữ liệu `ApiCreateEmotionPost` trên Mobile client. | [v4.2.0](file:///c:/source/emotion-care/docs/versions/MASTER-SPECIFICATION-v4.2.0.md) |
+| **`v4.1.0`** | 2026-11-24 | Solution Architect | • Bổ sung Liquibase Migration 04: Cập nhật trường `author_alias`, `style_type`, `atmosphere`, `copy_count`, `viral_score` trên `emotion_posts`.<br>• Bổ sung trường `app_mode`, `author_alias` trên `device_settings`.<br>• Khởi tạo bảng thứ 19: `saved_posts` phục vụ tính năng lưu bookmark cá nhân.<br>• Bổ sung API bookmark: `POST/DELETE /posts/{id}/save`, `GET /posts/saved`.<br>• Nâng cấp Creator Studio (`write.tsx`) với thanh chọn Tâm trạng (Mood Selector) vuốt active. | [v4.1.0](file:///c:/source/emotion-care/docs/versions/MASTER-SPECIFICATION-v4.1.0.md) |
 | **`v4.0.0`** | 2026-11-22 | Solution Architect | • Bổ sung NFRs, SLA & Data Retention Policy.<br>• Chuyển đổi AI sang mô hình API-Based (bỏ Local Ollama).<br>• Mở rộng 6 Go Workers (có feed-worker).<br>• **Đặc tả toàn diện Feed Fan-out on Write & Redis ZSET**.<br>• Chuẩn hóa API RESTful và cấu trúc 15 chương. | [v4.0.0](file:///c:/source/emotion-care/docs/versions/MASTER-SPECIFICATION-v4.0.0.md) |
 | **`v3.0.0`** | 2026-11-22 | Core Team | • Hợp nhất toàn bộ tài liệu cũ từ NestJS và các file rời rạc.<br>• Khởi tạo tài liệu Master Specification 9 chương đầu tiên. | [v3.0.0](file:///c:/source/emotion-care/docs/versions/MASTER-SPECIFICATION-v3.0.0.md) |
 
@@ -469,7 +471,7 @@ flowchart LR
 
 # 9. TỪ ĐIỂN CƠ SỞ DỮ LIỆU TOÀN TẬP
 
-Hệ thống quản lý 18 bảng chuẩn qua **Liquibase** (`db.changelog-master.xml`):
+Hệ thống quản lý 19 bảng chuẩn qua **Liquibase** (`db.changelog-master.xml`):
 
 | STT | Tên Bảng | Ý nghĩa nghiệp vụ | Khóa chính | Khóa ngoại |
 | :---: | :--- | :--- | :---: | :--- |
@@ -491,6 +493,7 @@ Hệ thống quản lý 18 bảng chuẩn qua **Liquibase** (`db.changelog-maste
 | **16**| `notifications` | Bản ghi thông báo gửi đến người dùng| `id` (UUID) | $\rightarrow$ `devices(id)` |
 | **17**| `notification_queue` | Hàng đợi retry thông báo lỗi | `id` (BIGSERIAL) | $\rightarrow$ `notifications(id)` |
 | **18**| `outbox_events` | Bảng Transactional Outbox phân tán | `id` (UUID) | Khóa Idempotency duy nhất |
+| **19**| `saved_posts` | Bảng lưu bài viết / bookmark cá nhân | `id` (BIGSERIAL) | $\rightarrow$ `devices(id)`, `posts(id)` |
 
 ---
 
@@ -527,13 +530,16 @@ Toàn bộ API được thiết kế theo chuẩn **RESTful** (Clean URL không 
 * `GET /reactions/types`: Lấy danh sách 5 loại biểu cảm thấu cảm (Lắng nghe, Ôm, Ở đây với bạn...).
 
 ### 11.3. Post & Caption Domain (`/posts`)
-* `POST /posts`: Đăng bài cảm xúc hoặc social caption (kèm Transactional Outbox event).
+* `POST /posts`: Đăng bài cảm xúc hoặc social caption (hỗ trợ Dual-Resolution: nhận `code`/`emotion_code` hoặc `emotion_category_id`, kèm Transactional Outbox event).
 * `GET /posts`: Lấy feed bài viết phân trang (hỗ trợ lọc theo `categoryId`, `tagId`).
 * `GET /posts/trending`: Lấy bảng xếp hạng caption viral thịnh hành theo `viral_score`.
 * `GET /posts/me`: Lấy lịch sử bài viết/caption của chính thiết bị hiện tại.
 * `GET /posts/{id}`: Xem chi tiết bài viết kèm danh sách tags và reaction counts.
 * `DELETE /posts/{id}`: Xóa bài viết (chỉ chủ thiết bị sở hữu mới có quyền xóa).
 * `POST /posts/{id}/copy`: Ghi nhận sự kiện copy caption (tăng `copy_count`, phát sinh outbox event).
+* `POST /posts/{id}/save`: Lưu bài viết / bookmark vào thư viện cá nhân.
+* `DELETE /posts/{id}/save`: Bỏ lưu bài viết khỏi thư viện cá nhân.
+* `GET /posts/saved`: Lấy danh sách các bài viết / bookmark đã lưu của thiết bị hiện tại.
 
 ### 11.4. Reaction Domain (`/posts/{postId}/reactions`)
 * `POST /posts/{postId}/reactions`: Thả / đổi / hủy biểu cảm trên bài viết `{postId}`.

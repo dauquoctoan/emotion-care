@@ -2,6 +2,7 @@ import * as Notifications from "expo-notifications";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useInitApp } from "@/hooks/use-init-app";
@@ -58,32 +59,34 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <NotificationProvider>
-        <ThemeProvider value={DarkTheme}>
-          <Stack>
-            <Stack.Screen
-              name="(tabs)"
-              options={{ headerShown: false, headerTransparent: true }}
-            />
-            <Stack.Screen name="settings" options={{ headerShown: false }} />
-            <Stack.Screen name="detail" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="how-it-works"
-              options={{
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="welcome-screen"
-              options={{
-                headerShown: false,
-              }}
-            />
-          </Stack>
-          <StatusBar style="light" />
-        </ThemeProvider>
-      </NotificationProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+        <NotificationProvider>
+          <ThemeProvider value={DarkTheme}>
+            <Stack>
+              <Stack.Screen
+                name="(tabs)"
+                options={{ headerShown: false, headerTransparent: true }}
+              />
+              <Stack.Screen name="settings" options={{ headerShown: false }} />
+              <Stack.Screen name="detail" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="how-it-works"
+                options={{
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="welcome-screen"
+                options={{
+                  headerShown: false,
+                }}
+              />
+            </Stack>
+            <StatusBar style="light" />
+          </ThemeProvider>
+        </NotificationProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

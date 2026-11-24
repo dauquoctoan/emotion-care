@@ -153,3 +153,39 @@ export const reactToEmotionPost = async (postId: string, reactionTypeId: number)
     console.log(error);
   }
 };
+
+/**
+ * Save / bookmark a post to personal library
+ */
+export const savePost = async (postId: string) => {
+  try {
+    const data = await api.post<ApiResponse<{ saved: boolean; postId: string }>>(`/posts/${postId}/save`);
+    return data;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+/**
+ * Remove a post from personal library bookmarks
+ */
+export const unsavePost = async (postId: string) => {
+  try {
+    const data = await api.delete<ApiResponse<{ saved: boolean; postId: string }>>(`/posts/${postId}/save`);
+    return data;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+/**
+ * Get current device's bookmarked posts
+ */
+export const getSavedPosts = async (page = 0, size = 20) => {
+  try {
+    const data = await api.get<ApiResponse<any>>(`/posts/saved?page=${page}&size=${size}`);
+    return data;
+  } catch (error) {
+    console.log(error);
+  }
+};

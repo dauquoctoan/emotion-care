@@ -31,4 +31,10 @@ public class UpdateDeviceSettingRequest {
 
   @JsonProperty("low_pressure_mode")
   private Boolean lowPressureMode;
+
+  @JsonProperty("app_mode")
+  private String appMode;
+
+  @JsonProperty("author_alias")
+  private String authorAlias;
 }

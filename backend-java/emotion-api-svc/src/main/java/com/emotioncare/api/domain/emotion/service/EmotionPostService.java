@@ -10,12 +10,14 @@ import com.emotioncare.api.domain.emotion.entity.EmotionPostEntity;
 import com.emotioncare.api.domain.emotion.entity.EmotionPostTagEntity;
 import com.emotioncare.api.domain.emotion.entity.EmotionPostTagId;
 import com.emotioncare.api.domain.emotion.entity.EmotionTagEntity;
+import com.emotioncare.api.domain.emotion.entity.SavedPostEntity;
 import com.emotioncare.api.domain.emotion.mapper.CategoryMapper;
 import com.emotioncare.api.domain.emotion.mapper.EmotionPostMapper;
 import com.emotioncare.api.domain.emotion.repository.EmotionCategoryRepository;
 import com.emotioncare.api.domain.emotion.repository.EmotionPostRepository;
 import com.emotioncare.api.domain.emotion.repository.EmotionPostTagRepository;
 import com.emotioncare.api.domain.emotion.repository.EmotionTagRepository;
+import com.emotioncare.api.domain.emotion.repository.SavedPostRepository;
 import com.emotioncare.api.domain.outbox.entity.OutboxEventEntity;
 import com.emotioncare.api.domain.outbox.repository.OutboxEventRepository;
 import com.emotioncare.api.domain.reaction.entity.PostReactionEntity;
@@ -53,6 +55,7 @@ public class EmotionPostService {
   private final DeviceService deviceService;
   private final OutboxEventRepository outboxEventRepository;
   private final PostReactionRepository postReactionRepository;
+  private final SavedPostRepository savedPostRepository;
   private final EmotionPostMapper postMapper;
   private final CategoryMapper categoryMapper;
 
@@ -68,15 +71,34 @@ public class EmotionPostService {
 
     DeviceEntity device = deviceService.getOrCreateDevice(token);
 
-    EmotionCategoryEntity category = categoryRepository.findById(req.getEmotionCategoryId())
-        .orElseThrow(() -> new ResourceNotFoundException(
-            "Emotion category not found with ID: " + req.getEmotionCategoryId()));
+    // 0. Resolve category by semantic code key first, then fallback to emotionCategoryId
+    String effectiveCode = req.getEffectiveCode();
+    EmotionCategoryEntity category = null;
+    if (StringUtils.isNotBlank(effectiveCode)) {
+      category = categoryRepository.findByCode(effectiveCode).orElse(null);
+    }
+    if (category == null && req.getEmotionCategoryId() != null) {
+      category = categoryRepository.findById(req.getEmotionCategoryId()).orElse(null);
+    }
+
+    if (category == null) {
+      throw new BadRequestException(
+          "Valid emotion code or emotion_category_id is required. Provided code: '"
+              + effectiveCode + "', category_id: " + req.getEmotionCategoryId());
+    }
 
     // 1. Build & save post entity using MapStruct
     EmotionPostEntity post = postMapper.toEntity(req);
     post.setDeviceId(device.getId());
     post.setEmotionCategoryId(category.getId());
+    post.setEmotionCategory(category);
     post.setExpiredAt(Instant.now().plus(7, ChronoUnit.DAYS));
+
+    if (StringUtils.isNotBlank(req.getAuthorAlias())) {
+      post.setAuthorAlias(req.getAuthorAlias().trim());
+    } else if (device.getSetting() != null && StringUtils.isNotBlank(device.getSetting().getAuthorAlias())) {
+      post.setAuthorAlias(device.getSetting().getAuthorAlias());
+    }
 
     EmotionPostEntity savedPost = postRepository.save(post);
 
@@ -183,9 +205,14 @@ public class EmotionPostService {
         .build();
 
     outboxEventRepository.save(outboxEvent);
+
+    // Atomically increment copy count on post
+    post.setCopyCount(post.getCopyCount() != null ? post.getCopyCount() + 1 : 1);
+    postRepository.save(post);
+
     log.info("Recorded post copy event for post {} by {}", postId, actorToken);
 
-    return Map.of("copied", true, "postId", postId.toString());
+    return Map.of("copied", true, "postId", postId.toString(), "copy_count", post.getCopyCount());
   }
 
   @Transactional(readOnly = true)
@@ -235,6 +262,64 @@ public class EmotionPostService {
 
     post.setStatus((short) 0);
     postRepository.save(post);
+  }
+
+  @Transactional
+  public Map<String, Object> savePost(UUID postId, String callerDeviceToken) {
+    if (StringUtils.isBlank(callerDeviceToken)) {
+      throw new BadRequestException("Device ID is required to bookmark post");
+    }
+    DeviceEntity device = deviceService.findOne(callerDeviceToken)
+        .orElseThrow(() -> new ResourceNotFoundException("Device not found with token: " + callerDeviceToken));
+    EmotionPostEntity post = postRepository.findById(postId)
+        .orElseThrow(() -> new ResourceNotFoundException("Emotion post not found with ID: " + postId));
+
+    if (!savedPostRepository.existsByDeviceIdAndPostId(device.getId(), post.getId())) {
+      SavedPostEntity saved = SavedPostEntity.builder()
+          .deviceId(device.getId())
+          .postId(post.getId())
+          .build();
+      savedPostRepository.save(saved);
+    }
+    return Map.of("saved", true, "postId", postId.toString());
+  }
+
+  @Transactional
+  public Map<String, Object> unsavePost(UUID postId, String callerDeviceToken) {
+    if (StringUtils.isBlank(callerDeviceToken)) {
+      throw new BadRequestException("Device ID is required to unbookmark post");
+    }
+    DeviceEntity device = deviceService.findOne(callerDeviceToken)
+        .orElseThrow(() -> new ResourceNotFoundException("Device not found with token: " + callerDeviceToken));
+
+    savedPostRepository.deleteByDeviceIdAndPostId(device.getId(), postId);
+    return Map.of("saved", false, "postId", postId.toString());
+  }
+
+  @Transactional(readOnly = true)
+  public Page<PostResponse> getSavedPosts(String callerDeviceToken, Pageable pageable) {
+    if (StringUtils.isBlank(callerDeviceToken)) {
+      throw new BadRequestException("Device ID is required to fetch saved posts");
+    }
+    DeviceEntity device = deviceService.findOne(callerDeviceToken)
+        .orElseThrow(() -> new ResourceNotFoundException("Device not found with token: " + callerDeviceToken));
+
+    Page<SavedPostEntity> savedPage = savedPostRepository.findByDeviceIdOrderByCreatedAtDesc(device.getId(), pageable);
+    if (savedPage.isEmpty()) {
+      return Page.empty(pageable);
+    }
+
+    List<UUID> postIds = savedPage.getContent().stream().map(SavedPostEntity::getPostId).toList();
+    List<EmotionPostEntity> posts = postRepository.findAllById(postIds);
+
+    Map<UUID, EmotionPostEntity> postMap = posts.stream().collect(Collectors.toMap(EmotionPostEntity::getId, p -> p));
+    List<EmotionPostEntity> orderedPosts = postIds.stream()
+        .map(postMap::get)
+        .filter(java.util.Objects::nonNull)
+        .toList();
+
+    Page<EmotionPostEntity> postsPage = new PageImpl<>(orderedPosts, pageable, savedPage.getTotalElements());
+    return enrichPostsPage(postsPage, callerDeviceToken, pageable);
   }
 
   private Page<PostResponse> enrichPostsPage(Page<EmotionPostEntity> postsPage, String callerDeviceToken, Pageable pageable) {

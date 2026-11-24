@@ -16,4 +16,8 @@
     <sqlFile path="db/changelog/sql/03-sample-posts.sql" relativeToChangelogFile="false"/>
   </changeSet>
 
+  <changeSet author="emotioncare" id="1000000000004-update-post-and-device-schema">
+    <sqlFile path="db/changelog/sql/04-update-post-and-device-schema.sql" relativeToChangelogFile="false"/>
+  </changeSet>
+
 </databaseChangeLog>

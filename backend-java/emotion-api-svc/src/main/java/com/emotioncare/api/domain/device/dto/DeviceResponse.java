@@ -56,6 +56,12 @@ public class DeviceResponse {
     @JsonProperty("low_pressure_mode")
     private Boolean lowPressureMode;
 
+    @JsonProperty("app_mode")
+    private String appMode;
+
+    @JsonProperty("author_alias")
+    private String authorAlias;
+
     @JsonProperty("updated_at")
     private Instant updatedAt;
   }
